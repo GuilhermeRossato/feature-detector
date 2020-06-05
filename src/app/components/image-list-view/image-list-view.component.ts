@@ -26,7 +26,7 @@ export class ImageListViewComponent implements OnInit {
   public imageList: ImageEntry[] = [];
   private imageInsertTimer: any;
 
-  @Output() removeImageAction = new EventEmitter<number>();
+  @Output() removeImageAction = new EventEmitter<string | true>();
   @ViewChild("listWrapper") listWrapper: ElementRef<HTMLDivElement>;
 
   constructor(
@@ -65,8 +65,13 @@ export class ImageListViewComponent implements OnInit {
     this.initializeDescription(image);
   }
 
-  onRemoveClick(button: HTMLButtonElement, id: number, image: ImageEntry) {
-    this.removeImageAction.emit(id);
+  onRemoveClick(button: HTMLButtonElement, image: ImageEntry, id: number) {
+    if (this.imageList.length <= 1) {
+      this.imageList = [];
+      this.removeImageAction.emit(true);
+      return;
+    }
+    this.removeImageAction.emit(image.src);
     this.imageList.splice(id, 1);
   }
 

@@ -31,3 +31,14 @@
 .error-wrapper > .error-view .title {
   margin: 10px 0px;
 }
+
+.network-control-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-end;
+  justify-content: center;
+}
+
+.network-control-line > div {
+  flex-basis: calc(50% - 4px);
+}

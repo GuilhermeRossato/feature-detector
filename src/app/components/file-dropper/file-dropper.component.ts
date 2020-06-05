@@ -44,7 +44,9 @@ export class FileDropperComponent implements OnInit {
           reader.readAsDataURL(file);
         }));
     }
-    this.imageAdded.emit(await Promise.all(promises));
+    const imageDescriptorList = await Promise.all(promises);
+
+    this.imageAdded.emit(imageDescriptorList.sort((a, b) => a.name > b.name ? 1 : (a.name < b.name ? -1 : 0)));
   }
 
   onDragOver(event: Event, dataTransfer: DataTransfer) {

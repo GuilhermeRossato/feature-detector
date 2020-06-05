@@ -51,23 +51,33 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  onRemoveImageRequest(id: number) {
+  onRemoveImageRequest(url: string | true) {
     let imageDesc = this.fetchImageListFromStorage();
     if (!imageDesc) {
       return;
     }
-    if (typeof id !== "number" || isNaN(id) || id < 0 || id >= imageDesc.length) {
-      console.warn("Id is outside image list bounds");
-    }
-    if (id === 0 && imageDesc.length === 0) {
+    if (url === true || imageDesc.length <= 1) {
       imageDesc = [];
-    } else {
-      imageDesc.splice(id, 1);
+      this.saveImageListToCache(imageDesc);
+      this.showDropImageOverlay = true;
+      return;
     }
+    let id;
+    for (let i = 0; i < imageDesc.length; i++) {
+      if (imageDesc[i].url === url) {
+        id = i;
+        break;
+      }
+    }
+    if (typeof id !== "number") {
+      console.log("Image has not been saved or has already been removed");
+      return;
+    }
+    imageDesc.splice(id, 1);
     this.saveImageListToCache(imageDesc);
   }
 
-  fetchImageListFromStorage() {
+  fetchImageListFromStorage(): RawFileDescriptor[] {
     const imageListDesc = this.localStorage.getItem("vfd-image-list");
     if (typeof imageListDesc !== "string") {
       return;
