@@ -1,1 +1,8 @@
-<p>image-list-view works!</p>
+<div class="image-view-wrapper">
+  <div class="image-view" *ngFor="let image of imageList">
+    <label>{{ image.name }}</label>
+    <div class="image-container">
+      <img [src]="image.src"/>
+    </div>
+  </div>
+</div>

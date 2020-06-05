@@ -1,0 +1,37 @@
+.image-view-wrapper {
+  display: flex;
+  overflow: auto;
+}
+
+.image-view {
+  max-width: 200px;
+  height: 200px;
+  padding: 5px;
+  border: 1px solid #BBB;
+}
+
+.image-view label {
+  display: block;
+  font-size: 0.7rem;
+  text-align: center;
+  width: 100%;
+  margin-bottom: 6px;
+  height: 14px;
+  cursor: text;
+}
+
+.image-view .image-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  height: calc(200px - 20px);
+}
+
+.image-view + .image-view {
+  margin-left: 5px;
+}
+
+.image-view img {
+  height: calc(200px - 20px);
+}

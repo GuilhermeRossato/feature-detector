@@ -13,35 +13,38 @@ export interface RawFileDescriptor {
 })
 export class FileDropperComponent implements OnInit {
 
-  @Output() imageAdded = new EventEmitter<RawFileDescriptor>();
+  @Output() imageAdded = new EventEmitter<RawFileDescriptor[]>();
 
   constructor() { }
 
   ngOnInit(): void {
   }
 
-  onFileSelect(event: Event, target: HTMLInputElement) {
+  async onFileSelect(event: Event, target: HTMLInputElement) {
     const files = target.files;
 
+    const promises: Promise<RawFileDescriptor>[] = [];
     for (let i = files.length-1; i >= 0; i--) {
       const file = files[i];
-      const reader = new FileReader();
+      promises.push(
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const url = e.target.result;
+            if (typeof url !== "string" || url.length < 100) {
+              return reject(new Error(`Unexpected URL when opening file "${file.name}"`));
+            }
+            return resolve({
+              name: file.name,
+              url: url,
+              size: file.size
+            })
+          }
 
-      reader.onload = (e) => {
-        const url = e.target.result;
-        if (typeof url !== "string" || !url) {
-          throw new Error(`Unexpected URL when opening file "${file.name}"`);
-        }
-        const descriptor = {
-          name: file.name,
-          url: url,
-          size: file.size
-        }
-        this.imageAdded.emit(descriptor);
-      }
-
-      reader.readAsDataURL(file);
+          reader.readAsDataURL(file);
+        }));
     }
+    this.imageAdded.emit(await Promise.all(promises));
   }
 
   onDragOver(event: Event, dataTransfer: DataTransfer) {

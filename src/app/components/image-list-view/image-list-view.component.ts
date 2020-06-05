@@ -8,13 +8,22 @@ import { RawFileDescriptor } from '../file-dropper/file-dropper.component';
 })
 export class ImageListViewComponent implements OnInit {
 
+  private imageList: HTMLImageElement[] = [];
+
   constructor() { }
 
   ngOnInit(): void {
   }
 
+  private onImageFinishLoading(image: HTMLImageElement) {
+  }
+
   insertImage(fileDesc: RawFileDescriptor) {
-    console.log("hello");
+    const image = new Image();
+    image.name = fileDesc.name;
+    image.onload = this.onImageFinishLoading.bind(this, image);
+    image.src = fileDesc.url;
+    this.imageList.push(image);
   }
 
 }
