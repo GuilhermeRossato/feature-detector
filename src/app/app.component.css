@@ -1,0 +1,32 @@
+.section-list-wrapper {
+  margin: 100px auto 100px auto;
+  box-sizing: border-box;
+  width: 740px;
+  border-width: 2px;
+  border-style: solid;
+  border-color: lightgrey;
+  border-image: none;
+  padding: 30px;
+}
+
+.error-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.error-wrapper > .error-view {
+  max-width: 1000px;
+  background-color: white;
+  border: 2px solid lightgrey;
+  padding: 10px 15px;
+}
+
+.error-wrapper > .error-view .title {
+  margin: 10px 0px;
+}

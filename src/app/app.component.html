@@ -1,1 +1,13 @@
-<app-file-dropper *ngIf="showDropImageOverlay"></app-file-dropper>
+<app-file-dropper
+  (imageAdded)="onImageInsert($event)"
+  *ngIf="showDropImageOverlay && !error"
+></app-file-dropper>
+<div class="error-wrapper" *ngIf="error">
+  <div class="error-view">
+    <h2 class="title">{{ error.message }}</h2>
+    <pre class="stack">{{ error.stack }}</pre>
+  </div>
+</div>
+<div class="section-list-wrapper">
+  <app-image-list-view #imageList></app-image-list-view>
+</div>

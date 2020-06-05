@@ -1,5 +1,11 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 
+export interface RawFileDescriptor {
+  name: string,
+  url: string,
+  size: number
+}
+
 @Component({
   selector: 'app-file-dropper',
   templateUrl: './file-dropper.component.html',
@@ -7,7 +13,7 @@ import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 })
 export class FileDropperComponent implements OnInit {
 
-  @Output() imageAdded = new EventEmitter<string>();
+  @Output() imageAdded = new EventEmitter<RawFileDescriptor>();
 
   constructor() { }
 
@@ -26,7 +32,12 @@ export class FileDropperComponent implements OnInit {
         if (typeof url !== "string" || !url) {
           throw new Error(`Unexpected URL when opening file "${file.name}"`);
         }
-        this.imageAdded.emit(url);
+        const descriptor = {
+          name: file.name,
+          url: url,
+          size: file.size
+        }
+        this.imageAdded.emit(descriptor);
       }
 
       reader.readAsDataURL(file);
