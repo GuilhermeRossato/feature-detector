@@ -11,8 +11,21 @@
   z-index: 99;
   border: 5px dashed darkgrey;
   box-sizing: border-box;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.75);
   user-select: none;
+}
+
+input[type="file"] {
+  position: fixed;
+  left: 0.5vw;
+  top: 0.5vh;
+  width: 99vw;
+  height: 99vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  opacity: 0.01;
 }
 
 .title {
