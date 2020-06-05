@@ -1,0 +1,47 @@
+.config-group-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-end;
+  justify-content: center;
+}
+
+.config-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: calc(50% - 8px);
+  flex-basis: calc(50% - 8px);
+  box-sizing: border-box;
+  margin: 5px 4px 5px 4px;
+}
+
+.config-group .input-group label {
+  display: block;
+  margin-top: 10px;
+  font-size: 1.05rem;
+  font-weight: bold;
+}
+
+.config-group .input-group input, .config-group .input-group select, .config-group .input-group textarea {
+  padding: 4px 6px;
+  margin: 5px 0px;
+  width: 100%;
+  max-width: 150px;
+  box-sizing: border-box;
+}
+
+.config-group .explanation .title {
+  font-weight: normal;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.config-group .explanation .description {
+  color: #777;
+  font-size: 0.75em;
+}
+
+.brush-preview-wrapper {
+  width: 100%;
+  flex-basis: 100%;
+}

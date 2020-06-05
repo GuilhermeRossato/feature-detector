@@ -1,5 +1,5 @@
 import { Component, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
-import { LocalStorageService } from './services/localstorage.service';
+import { LocalStorageService } from './services/local-storage.service';
 import { RawFileDescriptor } from './components/file-dropper/file-dropper.component';
 import { ImageListViewComponent } from './components/image-list-view/image-list-view.component';
 
@@ -12,9 +12,10 @@ import { ImageListViewComponent } from './components/image-list-view/image-list-
 export class AppComponent implements OnInit, AfterViewInit {
 
   public showDropImageOverlay = true;
+  public error?: Error;
   private isDraggingFile = false;
   private state: any = {};
-  private error?: Error;
+
   @ViewChild(ImageListViewComponent) imageList: ImageListViewComponent;
 
   constructor(
@@ -26,7 +27,9 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.loadImageListFromStorage();
+    setTimeout(() => {
+      this.loadImageListFromStorage();
+    }, 50);
   }
 
   loadStateFromStorage() {
@@ -48,7 +51,23 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  loadImageListFromStorage() {
+  onRemoveImageRequest(id: number) {
+    let imageDesc = this.fetchImageListFromStorage();
+    if (!imageDesc) {
+      return;
+    }
+    if (typeof id !== "number" || isNaN(id) || id < 0 || id >= imageDesc.length) {
+      console.warn("Id is outside image list bounds");
+    }
+    if (id === 0 && imageDesc.length === 0) {
+      imageDesc = [];
+    } else {
+      imageDesc.splice(id, 1);
+    }
+    this.saveImageListToCache(imageDesc);
+  }
+
+  fetchImageListFromStorage() {
     const imageListDesc = this.localStorage.getItem("vfd-image-list");
     if (typeof imageListDesc !== "string") {
       return;
@@ -63,19 +82,24 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (!(imageDescObj instanceof Array) || imageDescObj.length <= 0) {
       return;
     }
-    this.onImageInsert(imageDescObj, false);
+    return imageDescObj;
+  }
+
+  loadImageListFromStorage() {
+    const imageDesc = this.fetchImageListFromStorage();
+    if (!imageDesc) {
+      return;
+    }
+    this.onImageInsert(imageDesc, false);
   }
 
   onImageInsert(fileDescList: RawFileDescriptor[], shouldSaveAsCache = true) {
     this.showDropImageOverlay = false;
     const element = this.imageList;
-    if (!element) {
-      this.error = new Error(
-        "Could not find the image list internal component"
-      );
-      return;
-    }
     try {
+      if (!element) {
+        throw new Error("Could not find the image list internal component");
+      }
       for (let fileDesc of fileDescList) {
         element.insertImage(fileDesc);
       }
@@ -88,6 +112,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   saveImageListToCache(fileDescList: RawFileDescriptor[]) {
+    if (fileDescList.length === 0) {
+      this.localStorage.setItem("vfd-image-list", "[]", null);
+      return;
+    }
     const accumulatedSizeLimit = 2 * 1024 * 1024;
     let accumulatedSize = 0;
     let index = 0;

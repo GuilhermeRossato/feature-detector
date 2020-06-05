@@ -1,0 +1,108 @@
+<form class="config-group-form config-group-wrapper">
+  <div class="config-group">
+    <div class="input-group">
+      <label>Brush Size (px)</label>
+      <input type="number" min="0" max="2000" name="brush-size" value="16" step="2">
+    </div>
+    <div class="explanation">
+      <h4 class="title">How large are your features?</h4>
+      <small class="description">The smallest size necessary to detect what you're looking for. The size of the "eye" of the neural network. This is directly correlated to the input size of the solution.</small>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Brush Spacing (px)</label>
+      <input type="number" min="0" max="100" name="brush-spacing" value="0">
+    </div>
+    <div class="explanation">
+      <h4 class="title">How spaced should your inputs be?</h4>
+      <small class="description">How insensitive the network is for individual pixels. Spacing decreases the resolution of the input, significantly increasing the efficiency but making it less precise at detecting feature borders.</small>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Brush Shape</label>
+      <select name="brush-shape">
+        <option value="circle">Circle</option>
+        <option value="diamond">Diamond</option>
+        <option value="square">Square</option>
+      </select>
+    </div>
+    <div class="explanation">
+      <h4 class="title">What is the shape of your features?</h4>
+      <small class="description">Focuses the network input, removing unnecessary inputs. Diamond shape is good for features with many shapes. Circle is especially good for round features. Square is foolproof, but slower.</small>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Input Format</label>
+      <select name="input-format">
+        <option value="rgb">RGB</option>
+        <option value="hsl">HSL</option>
+        <option value="grayscale">Grayscale</option>
+        <option value="grayscale-r">Red Only</option>
+        <option value="grayscale-g">Blue Only</option>
+        <option value="grayscale-b">Green Only</option>
+      </select>
+    </div>
+    <div class="explanation">
+      <h4 class="title">How many channels are required?</h4>
+      <small class="description">Choose which colors may influence the detection of your features. Grayscale mode is only able to detect features by light intensity. HSL mode performs internal conversion from the RGB input.</small>
+    </div>
+  </div>
+  <div class="brush-preview-wrapper">
+    <hr/>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Feature Complexity</label>
+      <select name="network-layer">
+        <option value="0">Linearly Separable (0 layers)</option>
+        <option value="1">Simplest (1 layer)</option>
+        <option value="2">Simple (2 layers)</option>
+        <option value="3">Average (3 layers)</option>
+        <option value="4">Complex (4 layers)</option>
+        <option value="8">Deep (8 layers)</option>
+        <option value="16">Omniscient (16 layers)</option>
+      </select>
+    </div>
+    <div class="explanation">
+      <h4 class="title">How complex is your feature?</h4>
+      <small class="description">Each layer allows the network to learn an extra linearly separated aspect of the input to detect features. A 3-layer network can learn deeper mathematical relationships from the input when compared to a 1-layer network.</small>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Neuron Amount</label>
+      <input type="number" min="0" max="100" name="hidden-layer-node-count" value="0">
+    </div>
+    <div class="explanation">
+      <h4 class="title">How many neurons in each internal layer</h4>
+      <small class="description">Affects the number of connections between the layers. Too many neurons may cause overfitting, where the network performs well on training data but is bad at generalizing on new images.</small>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Activation Function</label>
+      <select name="activation-function">
+        <option value="sigmoid">Sigmoid (Typical) </option>
+        <option value="relu">Relu (Linear / Faster) </option>
+        <option value="tanh">Tanh (Alternative) </option>
+      </select>
+    </div>
+    <div class="explanation">
+      <h4 class="title">The internal activation function between layers</h4>
+      <small class="description">The function determines when a collection of neurons activate the next neurons (or output) by normalizing and shaping its aggregated results.</small>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Epochs</label>
+      <input type="number" min="0" max="100000" name="epoch-count" value="0">
+    </div>
+    <div class="explanation">
+      <h4 class="title">The number of full dataset passes</h4>
+      <small class="description">How many times the network will train with the full dataset.  Depends on the complexity of your features. Large values will most definitely cause overfitting.</small>
+    </div>
+  </div>
+</form>

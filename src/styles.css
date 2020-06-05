@@ -5,6 +5,10 @@ html, body {
   letter-spacing: 0.4px;
 }
 
+.hidden {
+  display: none;
+}
+
 .mobile-only {
   display: inherit;
 }

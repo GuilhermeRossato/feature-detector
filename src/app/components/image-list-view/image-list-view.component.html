@@ -1,8 +1,16 @@
-<div class="image-view-wrapper">
-  <div class="image-view" *ngFor="let image of imageList">
+<div class="image-view-wrapper" #listWrapper>
+  <div class="image-view" *ngFor="let image of imageList; index as id">
     <label>{{ image.name }}</label>
-    <div class="image-container">
-      <img [src]="image.src"/>
+    <button
+      class="remove"
+      role="button"
+      title="Remove Image"
+      (click)="onRemoveClick($event.target, image, id)"
+    >X</button>
+    <div class="image-container" [attr.data-index]="id">
+      <img *ngIf="image.state !== 'loaded'" />
+      <canvas [ngClass]="{'hidden': image.state !== 'loaded'}"></canvas>
     </div>
+    <div class="description">{{ image.description }}</div>
   </div>
 </div>
