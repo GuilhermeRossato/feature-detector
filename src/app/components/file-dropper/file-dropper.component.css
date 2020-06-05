@@ -1,0 +1,25 @@
+:host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  position: fixed;
+  top: 1vw;
+  left: 1vw;
+  width: calc(100vw - 2vw);
+  height: calc(100vh - 2vw);
+  z-index: 99;
+  border: 5px dashed darkgrey;
+  box-sizing: border-box;
+  background-color: rgba(255, 255, 255, 0.5);
+  user-select: none;
+}
+
+.title {
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+}
