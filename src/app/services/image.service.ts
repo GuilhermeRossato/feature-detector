@@ -39,7 +39,7 @@ function decodeCharCode(code) {
 @Injectable({
   providedIn: 'root'
 })
-export class AppendedImageService {
+export class ImageService {
 
   constructor() { }
 
@@ -94,6 +94,26 @@ export class AppendedImageService {
     if (list[list.length-1] === "") {
       list.pop();
     }
+    canvas.setAttribute("data-label-list", JSON.stringify(list));
     return list;
+  }
+
+
+  getAnnotationAt(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, point: {x: number, y:number}) {
+    let list: string[];
+    if (canvas.hasAttribute("data-label-list")) {
+      list = JSON.parse(canvas.getAttribute("data-label-list"));
+    } else {
+      list = this.getAnnotationFromCanvas(canvas, ctx);
+    }
+    const data = ctx.getImageData(point.x | 0, point.y | 0, 1, 1).data;
+    if (data[3] < 128 || data[3] >= 255) {
+      return null;
+    }
+    const labelId = Math.round((255 - data[3]) / 2) - 1;
+    if (labelId >= list.length) {
+      return null;
+    }
+    return list[labelId];
   }
 }

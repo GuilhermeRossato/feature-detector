@@ -44,12 +44,11 @@
 }
 
 .image-view canvas {
-  transition: transform 0.3s ease-in-out;
-  transform: scale(0.666666);
+  transform: scale(0.5);
 }
 
 .image-view canvas:hover {
-  transform: scale(1);
+  /* transform: scale(1); */
 }
 
 .image-view .description {

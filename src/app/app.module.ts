@@ -7,6 +7,7 @@ import { ImageListViewComponent } from './components/image-list-view/image-list-
 import { NetworkConfiguratorComponent } from './components/network-configurator/network-configurator.component';
 import { NetworkReviewComponent } from './components/network-review/network-review.component';
 import { NetworkActionsComponent } from './components/network-actions/network-actions.component';
+import { BrushVisualizationComponent } from './brush-visualization/brush-visualization.component';
 
 @NgModule({
   declarations: [
@@ -15,7 +16,8 @@ import { NetworkActionsComponent } from './components/network-actions/network-ac
     ImageListViewComponent,
     NetworkConfiguratorComponent,
     NetworkReviewComponent,
-    NetworkActionsComponent
+    NetworkActionsComponent,
+    BrushVisualizationComponent
   ],
   imports: [
     BrowserModule

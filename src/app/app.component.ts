@@ -2,6 +2,7 @@ import { Component, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angula
 import { LocalStorageService } from './services/local-storage.service';
 import { RawFileDescriptor } from './components/file-dropper/file-dropper.component';
 import { ImageListViewComponent } from './components/image-list-view/image-list-view.component';
+import { NetworkConfiguratorComponent } from './components/network-configurator/network-configurator.component';
 
 @Component({
   selector: 'app-root',
@@ -13,7 +14,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   public showDropImageOverlay = true;
   public error?: Error;
-  private isDraggingFile = false;
+  public selection: {canvas: HTMLCanvasElement, x: number, y: number} = null;
   private state: any = {};
 
   @ViewChild(ImageListViewComponent) imageList: ImageListViewComponent;
@@ -49,6 +50,10 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.state[key] = stateObj[key];
       }
     }
+  }
+
+  onCanvasSelect(selection: {canvas: HTMLCanvasElement, x: number, y: number}) {
+    this.selection = selection;
   }
 
   onRemoveImageRequest(url: string | true) {

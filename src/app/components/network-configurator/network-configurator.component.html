@@ -6,7 +6,7 @@
     </div>
     <div class="explanation">
       <h4 class="title">How large are your features?</h4>
-      <small class="description">The smallest size necessary to detect what you're looking for. The size of the "eye" of the neural network. This is directly correlated to the input size of the solution.</small>
+      <small class="description">The smallest size necessary to detect what you're looking for. The size of the "eye" of the neural network. This is directly correlated to the input size of the solution. If your feature always has the same size you might get away with half the size of your feature.</small>
     </div>
   </div>
   <div class="config-group">
@@ -51,13 +51,13 @@
     </div>
   </div>
   <div class="brush-preview-wrapper">
-    <hr/>
+    <app-brush-visualization [canvasInput]="selection"></app-brush-visualization>
   </div>
   <div class="config-group">
     <div class="input-group">
       <label>Feature Complexity</label>
       <select name="network-layer">
-        <option value="0">Linearly Separable (0 layers)</option>
+        <option value="0">Linearly Separable Problem (0 layers)</option>
         <option value="1">Simplest (1 layer)</option>
         <option value="2">Simple (2 layers)</option>
         <option value="3">Average (3 layers)</option>

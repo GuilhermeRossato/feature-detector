@@ -1,7 +1,12 @@
+h1 {
+  margin: 0 0 20px 0;
+  text-align: center;
+}
+
 .section-list-wrapper {
-  margin: 100px auto 100px auto;
+  margin: 25px auto 100px auto;
   box-sizing: border-box;
-  width: 740px;
+  width: 800px;
   border-width: 2px;
   border-style: solid;
   border-color: lightgrey;

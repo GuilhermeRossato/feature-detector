@@ -1,5 +1,5 @@
 <div class="image-view-wrapper" #listWrapper>
-  <div class="image-view" *ngFor="let image of imageList; index as id">
+  <div *ngFor="let image of imageList; index as id" [ngClass]="{'image-view': true, 'selected': image.selected}">
     <label>{{ image.name }}</label>
     <button
       class="remove"
@@ -9,7 +9,12 @@
     >X</button>
     <div class="image-container" [attr.data-index]="id">
       <img *ngIf="image.state !== 'loaded'" />
-      <canvas [ngClass]="{'hidden': image.state !== 'loaded'}"></canvas>
+      <canvas
+        (mouseout)="onMouseOut($event, $event.target, image, id)"
+        (mousemove)="onMouseMove($event, $event.target, image, id)"
+        (click)="onImageClick($event, $event.target, image, id)"
+        [ngClass]="{'hidden': image.state !== 'loaded'}"
+      ></canvas>
     </div>
     <div class="description">{{ image.description }}</div>
   </div>

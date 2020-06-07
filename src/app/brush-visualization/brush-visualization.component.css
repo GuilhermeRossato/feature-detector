@@ -1,0 +1,14 @@
+:host {
+  display: block;
+}
+
+canvas {
+  box-sizing: border-box;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAL0lEQVQ4T2O8e/fufwY8QFlZmRGfPOOoAQzDIQzwxTFIjlA0400kowZAgnfwByIA6+88wa3CZMwAAAAASUVORK5CYII=);
+  image-rendering: pixelated;
+}
+
+.brush-text {
+  display: flex;
+  justify-content: space-between;
+}
