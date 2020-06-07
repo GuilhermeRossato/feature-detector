@@ -116,4 +116,76 @@ export class ImageService {
     }
     return list[labelId];
   }
+
+  getFeatureLabelCount(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): number[] {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height-1);
+    if (!imageData || !imageData.data || imageData.width !== canvas.width || imageData.height !== canvas.height) {
+      return null;
+    }
+    let counts = [];
+    for (let y = 0; y < imageData.height; y++) {
+      for (let x = 0; x < imageData.width; x++) {
+        const data = imageData.data[(y * imageData.height + x) * 4 + 3];
+        if (data > 128 && data < 255) {
+          const labelId = Math.round((255 - data) / 2) - 1;
+          if (typeof counts[labelId] !== "number") {
+            counts[labelId] = 1;
+          } else {
+            counts[labelId]++;
+          }
+        }
+      }
+    }
+    return counts;
+  }
+
+  getFeaturePixels(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height-1);
+    if (!imageData || !imageData.data || imageData.width !== canvas.width || imageData.height !== canvas.height) {
+      return null;
+    }
+    let count = 0;
+    for (let y = 0; y < imageData.height; y++) {
+      for (let x = 0; x < imageData.width; x++) {
+        const data = imageData.data[(y * imageData.height + x) * 4 + 3];
+        if (data > 128 && data < 255) {
+          const labelId = Math.round((255 - data) / 2) - 1;
+        }
+      }
+    }
+    return imageData.data;
+  }
+
+  /**
+   * Converts an RGB color value to HSL. Conversion formula
+   * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+   *
+   * @param r The red color value in the set [0, 255]
+   * @param g The green color value in the set [0, 255]
+   * @param b The blue color value in the set [0, 255]
+   * @return  The HSL representation array where each element is in the set [0, 1]
+   */
+  rgbToHsl(r: number, g: number, b: number): [number, number, number] {
+    r /= 255, g /= 255, b /= 255;
+
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+
+    if (max == min) {
+      h = s = 0; // achromatic
+    } else {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+      switch (max) {
+        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+        case g: h = (b - r) / d + 2; break;
+        case b: h = (r - g) / d + 4; break;
+      }
+
+      h /= 6;
+    }
+
+    return [h, s, l];
+  }
 }

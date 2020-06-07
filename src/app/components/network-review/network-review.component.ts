@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 
 @Component({
   selector: 'app-network-review',
@@ -6,6 +6,17 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./network-review.component.css']
 })
 export class NetworkReviewComponent implements OnInit {
+
+  @Input() config: {
+    brushSize: number,
+    brushSpacing: number,
+    brushShape: string,
+    inputFormat: string,
+    hiddenLayerCount: number,
+    hiddenNeuronCount: number,
+    activationFunction: string,
+    epochCount: number
+  };
 
   constructor() { }
 

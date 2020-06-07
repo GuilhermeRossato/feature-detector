@@ -14,13 +14,14 @@
     (removeImageAction)="onRemoveImageRequest($event)"
     (selectCanvasAction)="onCanvasSelect($event)"
   ></app-image-list-view>
-  <app-network-configurator [selection]="selection"></app-network-configurator>
+  <app-network-configurator (configChange)="onConfigChange($event)" [selection]="selection"></app-network-configurator>
+  <hr />
   <div class="network-control-line">
     <div class="network-actions-wrapper">
       <app-network-actions></app-network-actions>
     </div>
     <div class="network-review-wrapper">
-      <app-network-review></app-network-review>
+      <app-network-review [config]="config"></app-network-review>
     </div>
   </div>
 </div>

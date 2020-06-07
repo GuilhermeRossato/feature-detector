@@ -22,14 +22,6 @@
   font-weight: bold;
 }
 
-.config-group .input-group input, .config-group .input-group select, .config-group .input-group textarea {
-  padding: 4px 6px;
-  margin: 5px 0px;
-  width: 100%;
-  max-width: 150px;
-  box-sizing: border-box;
-}
-
 .config-group .explanation .title {
   font-weight: normal;
   font-size: 0.9rem;

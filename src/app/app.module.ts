@@ -7,7 +7,8 @@ import { ImageListViewComponent } from './components/image-list-view/image-list-
 import { NetworkConfiguratorComponent } from './components/network-configurator/network-configurator.component';
 import { NetworkReviewComponent } from './components/network-review/network-review.component';
 import { NetworkActionsComponent } from './components/network-actions/network-actions.component';
-import { BrushVisualizationComponent } from './brush-visualization/brush-visualization.component';
+import { BrushVisualizationComponent } from './components/brush-visualization/brush-visualization.component';
+import { DynamicInputComponent } from './components/dynamic-input/dynamic-input.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { BrushVisualizationComponent } from './brush-visualization/brush-visuali
     NetworkConfiguratorComponent,
     NetworkReviewComponent,
     NetworkActionsComponent,
-    BrushVisualizationComponent
+    BrushVisualizationComponent,
+    DynamicInputComponent
   ],
   imports: [
     BrowserModule

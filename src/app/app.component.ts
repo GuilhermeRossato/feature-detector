@@ -15,6 +15,16 @@ export class AppComponent implements OnInit, AfterViewInit {
   public showDropImageOverlay = true;
   public error?: Error;
   public selection: {canvas: HTMLCanvasElement, x: number, y: number} = null;
+  public config: {
+    brushSize: number,
+    brushSpacing: number,
+    brushShape: string,
+    inputFormat: string,
+    hiddenLayerCount: number,
+    hiddenNeuronCount: number,
+    activationFunction: string,
+    epochCount: number
+  }
   private state: any = {};
 
   @ViewChild(ImageListViewComponent) imageList: ImageListViewComponent;
@@ -148,6 +158,19 @@ export class AppComponent implements OnInit, AfterViewInit {
     const fileListSlice = fileDescList.slice(0, index);
 
     this.localStorage.setItem("vfd-image-list", JSON.stringify(fileListSlice), null);
+  }
+
+  onConfigChange(obj: {
+    brushSize: number,
+    brushSpacing: number,
+    brushShape: string,
+    inputFormat: string,
+    hiddenLayerCount: number,
+    hiddenNeuronCount: number,
+    activationFunction: string,
+    epochCount: number
+  }) {
+    this.config = obj;
   }
 
 }

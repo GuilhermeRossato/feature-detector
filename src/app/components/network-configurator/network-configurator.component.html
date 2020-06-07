@@ -2,7 +2,15 @@
   <div class="config-group">
     <div class="input-group">
       <label>Brush Size (px)</label>
-      <input type="number" min="0" max="2000" name="brush-size" value="16" step="2">
+      <app-dynamic-input
+        type="number"
+        name="brush-size"
+        min="1"
+        max="1024"
+        step="2"
+        [startValue]="brushSize"
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
     </div>
     <div class="explanation">
       <h4 class="title">How large are your features?</h4>
@@ -12,7 +20,15 @@
   <div class="config-group">
     <div class="input-group">
       <label>Brush Spacing (px)</label>
-      <input type="number" min="0" max="100" name="brush-spacing" value="0">
+      <app-dynamic-input
+        type="number"
+        name="brush-spacing"
+        min="0"
+        max="64"
+        step="1"
+        [startValue]="brushSpacing"
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
     </div>
     <div class="explanation">
       <h4 class="title">How spaced should your inputs be?</h4>
@@ -22,11 +38,19 @@
   <div class="config-group">
     <div class="input-group">
       <label>Brush Shape</label>
-      <select name="brush-shape">
-        <option value="circle">Circle</option>
-        <option value="diamond">Diamond</option>
-        <option value="square">Square</option>
-      </select>
+      <app-dynamic-input
+        type="select"
+        name="brush-shape"
+        [startValue]="brushShape"
+        [options]="
+          [
+            {value: 'circle', label: 'Circle'},
+            {value: 'diamond', label: 'Diamond'},
+            {value: 'square', label: 'Square'}
+          ]
+        "
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
     </div>
     <div class="explanation">
       <h4 class="title">What is the shape of your features?</h4>
@@ -36,45 +60,77 @@
   <div class="config-group">
     <div class="input-group">
       <label>Input Format</label>
-      <select name="input-format">
-        <option value="rgb">RGB</option>
-        <option value="hsl">HSL</option>
-        <option value="grayscale">Grayscale</option>
-        <option value="grayscale-r">Red Only</option>
-        <option value="grayscale-g">Blue Only</option>
-        <option value="grayscale-b">Green Only</option>
-      </select>
+      <app-dynamic-input
+        type="select"
+        name="input-format"
+        [startValue]="inputFormat"
+        [options]="
+          [
+            {value:'rgb', label: 'RGB'},
+            {value:'hsl', label: 'HSL'},
+            {value:'grayscale', label: 'Grayscale'},
+            {value:'r', label: 'Red Only'},
+            {value:'g', label: 'Green Only'},
+            {value:'b', label: 'Blue Only'},
+            {value:'rg', label: 'Red and Green'},
+            {value:'rb', label: 'Red and Blue'}
+          ]
+        "
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
     </div>
     <div class="explanation">
       <h4 class="title">How many channels are required?</h4>
-      <small class="description">Choose which colors may influence the detection of your features. Grayscale mode is only able to detect features by light intensity. HSL mode performs internal conversion from the RGB input.</small>
+      <small class="description">Choose which colors may influence the detection of your features. Grayscale mode is only able to detect features by light intensity. HSL mode performs internal conversion from a RGB input.</small>
     </div>
   </div>
   <div class="brush-preview-wrapper">
-    <app-brush-visualization [canvasInput]="selection"></app-brush-visualization>
+    <app-brush-visualization
+      [brushSize]="brushSize"
+      [brushSpacing]="brushSpacing"
+      [brushShape]="brushShape"
+      [brushFormat]="inputFormat"
+      [canvasInput]="selection"
+    ></app-brush-visualization>
   </div>
   <div class="config-group">
     <div class="input-group">
       <label>Feature Complexity</label>
-      <select name="network-layer">
-        <option value="0">Linearly Separable Problem (0 layers)</option>
-        <option value="1">Simplest (1 layer)</option>
-        <option value="2">Simple (2 layers)</option>
-        <option value="3">Average (3 layers)</option>
-        <option value="4">Complex (4 layers)</option>
-        <option value="8">Deep (8 layers)</option>
-        <option value="16">Omniscient (16 layers)</option>
-      </select>
+      <app-dynamic-input
+        type="select"
+        name="hidden-layer-count"
+        [startValue]="hiddenLayerCount"
+        [options]="
+          [
+            {value:'0', label: 'Linearly Separable (0 layers)'},
+            {value:'1', label: 'Simplest (1 layer)'},
+            {value:'2', label: 'Simple (2 layers)'},
+            {value:'3', label: 'Average (3 layers)'},
+            {value:'4', label: 'Complex (4 layers)'},
+            {value:'8', label: 'Deep (8 layers)'},
+            {value:'16', label: 'Omniscient (16 layers)'}
+          ]
+        "
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
     </div>
     <div class="explanation">
-      <h4 class="title">How complex is your feature?</h4>
-      <small class="description">Each layer allows the network to learn an extra linearly separated aspect of the input to detect features. A 3-layer network can learn deeper mathematical relationships from the input when compared to a 1-layer network.</small>
+      <h4 class="title">How many internal (hidden) layers are necessary?</h4>
+      <small class="description">Each layer allows the network to learn an extra linearly separated aspect of the input to detect features. A 3-layer network is able to extract deeper mathematical relationships from the input when compared to a 1-layer network.</small>
     </div>
   </div>
   <div class="config-group">
     <div class="input-group">
       <label>Neuron Amount</label>
-      <input type="number" min="0" max="100" name="hidden-layer-node-count" value="0">
+      <app-dynamic-input
+        type="number"
+        name="hidden-layer-neuron-count"
+        min="1"
+        max="1024"
+        startValue="8"
+        [startValue]="hiddenNeuronCount"
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
     </div>
     <div class="explanation">
       <h4 class="title">How many neurons in each internal layer</h4>
@@ -84,11 +140,19 @@
   <div class="config-group">
     <div class="input-group">
       <label>Activation Function</label>
-      <select name="activation-function">
-        <option value="sigmoid">Sigmoid (Typical) </option>
-        <option value="relu">Relu (Linear / Faster) </option>
-        <option value="tanh">Tanh (Alternative) </option>
-      </select>
+      <app-dynamic-input
+        type="select"
+        name="activation-function"
+        [startValue]="activationFunction"
+        [options]="
+          [
+            {value:'sigmoid', label: 'Sigmoid (Typical)'},
+            {value:'relu', label: 'Relu (Linear / Faster)'},
+            {value:'tanh', label: 'Tanh (Alternative)'}
+          ]
+        "
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
     </div>
     <div class="explanation">
       <h4 class="title">The internal activation function between layers</h4>
@@ -98,11 +162,18 @@
   <div class="config-group">
     <div class="input-group">
       <label>Epochs</label>
-      <input type="number" min="0" max="100000" name="epoch-count" value="0">
+      <app-dynamic-input
+        type="number"
+        name="epoch-count"
+        min="1"
+        max="10000000"
+        startValue="10000"
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
     </div>
     <div class="explanation">
       <h4 class="title">The number of full dataset passes</h4>
-      <small class="description">How many times the network will train with the full dataset.  Depends on the complexity of your features. Large values will most definitely cause overfitting.</small>
+      <small class="description">How many times the network will train with the full dataset.  Depends on the complexity of your features. Excessively large values will most definitely cause overfitting.</small>
     </div>
   </div>
 </form>

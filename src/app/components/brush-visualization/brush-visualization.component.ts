@@ -1,6 +1,6 @@
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, OnChanges, SimpleChanges, Input } from '@angular/core';
-import { BrushService } from '../services/brush.service';
-import { ImageService } from '../services/image.service';
+import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener, OnChanges, SimpleChanges, Input, Output } from '@angular/core';
+import { BrushService } from '../../services/brush.service';
+import { ImageService } from '../../services/image.service';
 
 const clamp = (min: number, max: number) => (value: number) => value < min ? min : value > max ? max : value;
 
@@ -15,13 +15,13 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
   public leftText?: string;
   public rightText?: string;
 
-  private readonly spaceClamp = clamp(0, 20);
+  private readonly spaceClamp = clamp(0, 64);
   private readonly sizeClamp = clamp(1, 1000);
 
-  @Input() brushSize: number = 32;
+  @Input() brushSize: number = 16;
   @Input() brushSpacing: number = 1;
   @Input() brushShape: "square" | "circle" | "diamond" = "circle";
-  @Input() brushFormat: "RGB" | "HSL" | "R" | "G" | "B" | "I" = "I";
+  @Input() brushFormat: "rgb" | "hsl" | "r" | "g" | "b" | "rg" | "rb" | "grayscale" = "grayscale";
   @Input() canvasInput: {canvas: HTMLCanvasElement, x: number, y:number} = null;
 
   @ViewChild("left") left: ElementRef<HTMLCanvasElement>;
@@ -76,7 +76,7 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
 
     if (input && input.canvas) {
       const point = { x: input.x | 0, y: input.y | 0 };
-      this.drawInputBrushAt(right, rightCtx, size, pixels, input.canvas, point);
+      this.drawInputBrushAt(right, rightCtx, size, format, spacing, pixels, input.canvas, point);
       const label = this.imageService.getAnnotationAt(input.canvas, input.canvas.getContext("2d"), point);
       let prefix;
       let sufix = "";
@@ -100,6 +100,8 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
     canvas: HTMLCanvasElement,
     ctx: CanvasRenderingContext2D,
     size: number,
+    format: string,
+    spacing: number,
     pixels: {x: number, y: number}[],
     input: HTMLCanvasElement,
     pixel: {x: number, y: number}
@@ -114,6 +116,7 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
       x: horizontalClamp(inputOrigin.x + size),
       y: verticalClamp(inputOrigin.y + size)
     };
+    console.log(inputOrigin, input.width, inputTarget);
     const inputData = input.getContext("2d").getImageData(
       inputOrigin.x,
       inputOrigin.y,
@@ -121,7 +124,7 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
       inputTarget.y - inputOrigin.y,
     );
 
-    const imageData = ctx.getImageData(0, 0, size, size);
+    const imageData = ctx.createImageData(size, size);
     for (let pixel of pixels) {
       const localX = (pixel.x | 0) + (size / 2 | 0);
       const localY = (pixel.y | 0) + (size / 2 | 0);
@@ -131,26 +134,41 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
         throw new Error(`Pixel outside boundary: Original: ${pixel.x}, ${pixel.y} Size: ${size} Converted: ${localX} ${localY}`);
       }
       let color: {r: number, g: number; b: number};
-
       if (
         inputX >= inputOrigin.x &&
         inputY >= inputOrigin.y &&
-        inputX <= inputTarget.x &&
-        inputY <= inputTarget.y
+        inputX < inputTarget.x &&
+        inputY < inputTarget.y
       ) {
-        let i = ((inputY - inputOrigin.y) * size + (inputX - inputOrigin.x)) * 4;
+        let i = ((inputY - inputOrigin.y) * inputData.width + (inputX - inputOrigin.x)) * 4;
         if (i < 0 || i >= inputData.data.length) {
           color = {
             r: inputX > inputOrigin.x ? 255 : 128,
             g: inputY > inputOrigin.y ? 255 : 128,
             b: inputX < inputTarget.x ? 255 : 128
           };
+        } else if (format === "hsl") {
+          const [h, s, l] = this.imageService.rgbToHsl(inputData.data[i+0], inputData.data[i+1], inputData.data[i+2]);
+          color = {r: 255*h, g: 255*s, b: 255*l};
+        } else if (format === "grayscale") {
+          const intensity = (inputData.data[i+0] + inputData.data[i+1] + inputData.data[i+2]) / 3;
+          color = {r: intensity, g: intensity, b: intensity};
+        } else if (format === "r" || format === "g" || format === "b") {
+          color = {
+            r: format == "r" ? inputData.data[i+0] : 0,
+            g: format == "g" ? inputData.data[i+1] : 0,
+            b: format == "b" ? inputData.data[i+2] : 0
+          };
+        } else if (format === "rg") {
+          color = {r: inputData.data[i+0], g: inputData.data[i+1], b: 0};
+        } else if (format === "rb") {
+          color = {r: inputData.data[i+0], g: 0, b: inputData.data[i+2]};
         } else {
           color = {
             r: inputData.data[i+0],
             g: inputData.data[i+1],
             b: inputData.data[i+2]
-          }
+          };
         }
       }
 
@@ -160,6 +178,20 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
         imageData.data[i++] = color.g;
         imageData.data[i++] = color.b;
         imageData.data[i++] = 255;
+        if (spacing >= 1) {
+          for (let cy = 0; cy < spacing + 1; cy ++) {
+            i = ((localY+cy) * size + (localX)) * 4;
+            for (let cx = 0; cx < spacing + 1; cx ++) {
+              if (localX + cx >= imageData.width || localY + cy >= imageData.height) {
+                continue;
+              }
+              imageData.data[i++] = color.r;
+              imageData.data[i++] = color.g;
+              imageData.data[i++] = color.b;
+              imageData.data[i++] = 255;
+            }
+          }
+        }
       } else {
         imageData.data[(localY * size + localX) * 4 + 3] = 0;
       }
@@ -168,7 +200,7 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
   }
 
   drawRawBrush(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, size: number, pixels: {x: number, y: number}[]) {
-    const imageData = ctx.getImageData(0, 0, size, size);
+    const imageData = ctx.createImageData(size, size);
     for (let pixel of pixels) {
       const x = pixel.x + (size / 2 | 0);
       const y = pixel.y + (size / 2 | 0);

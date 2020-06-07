@@ -1,0 +1,30 @@
+<input
+  *ngIf="type === 'number'"
+  type="number"
+  [attr.data-error]="error"
+  [style.borderColor]="error ? 'red' : ''"
+  [value]="value"
+  [min]="min"
+  [max]="max"
+  [step]="step"
+  [name]="name"
+  (change)="onChange($event, $event.target)"
+  (keyup)="onChange($event, $event.target)"
+/>
+<input
+  *ngIf="type === 'text'"
+  type="text"
+  [attr.data-error]="error"
+  [style.borderColor]="error ? 'red' : ''"
+  [value]="value"
+  [name]="name"
+  [attr.maxlength]="maxlength"
+  (change)="onChange($event, $event.target)"
+  (keyup)="onChange($event, $event.target)"
+/>
+<select
+  *ngIf="type === 'select'"
+  [value]="value"
+  [name]="name"
+  (change)="onChange($event, $event.target)"
+><option *ngFor="let option of options" [value]="option.value">{{ option.label }}</option></select>

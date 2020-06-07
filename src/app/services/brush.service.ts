@@ -19,6 +19,9 @@ export class BrushService {
     if (cache.pixels && cache.shape === shape && cache.size === size && cache.spacing === spacing) {
       return cache.pixels;
     }
+    if (!["circle", "diamond", "square"].includes(shape)) {
+      throw new Error("Unknown brush shape: "+shape);
+    }
     const pixels: {x: number, y: number}[] = [];
     for (let x = 0; x < size; x++) {
       for (let y = 0; y < size; y++) {
@@ -32,14 +35,12 @@ export class BrushService {
           if (dist >= (size/2)) {
             continue;
           }
-        } else if (shape !== "square") {
-          throw new Error("Unknown brush shape: "+shape);
         }
-        if (spacing > 1) {
-          if ((Math.abs(x - (size/2|0))) % spacing != 0) {
-            continue;
-          }
-          if ((Math.abs(y - (size/2|0))) % spacing != 0) {
+        if ((spacing + 1) > 1) {
+          if (
+            (Math.abs(x - (size/2|0))) % (spacing + 1) != 0 ||
+            (Math.abs(y - (size/2|0))) % (spacing + 1) != 0
+          ) {
             continue;
           }
         }

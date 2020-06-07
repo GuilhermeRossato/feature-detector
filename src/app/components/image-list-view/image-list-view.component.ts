@@ -27,6 +27,7 @@ export class ImageListViewComponent {
 
   public imageList: ImageEntry[] = [];
   private imageInsertTimer: any;
+  private hasSentSelectedImage = false;
 
   @Output() removeImageAction = new EventEmitter<string | true>();
   @Output() selectCanvasAction = new EventEmitter<{canvas: HTMLCanvasElement, x: number, y: number}>();
@@ -63,6 +64,10 @@ export class ImageListViewComponent {
     image.ctx.drawImage(image.element, 0, 0, image.width, image.height);
     image.element = null;
     image.state = "loaded";
+    const hasWaitingImage = this.imageList.some((imageDesc) => imageDesc.state === "waiting");
+    if (!hasWaitingImage && !this.hasSentSelectedImage) {
+      this.sendRandomSelection();
+    }
     this.initializeDescription(image);
   }
 
@@ -96,7 +101,28 @@ export class ImageListViewComponent {
     const x = (event.clientX - rect.left + 0.5) * zoom;
     const y = (event.clientY - rect.top) * zoom - 0.5;
 
+    this.hasSentSelectedImage = true;
     this.selectCanvasAction.emit({canvas, x, y});
+  }
+
+  private sendRandomSelection() {
+    let image: ImageEntry;
+    if (this.imageList.length <= 0) {
+      return;
+    }
+    let limit = 100;
+    while (limit > 0 && (!image || !image.canvas || !image.canvas.width)) {
+      image = this.imageList[Math.random() * this.imageList.length | 0];
+      limit--;
+    }
+    if (!image || !image.canvas || !image.canvas.width) {
+      return;
+    }
+    let x = (0.25 + 0.5*Math.random()) * image.canvas.width | 0;
+    let y = (0.25 + 0.5*Math.random()) * image.canvas.height | 0;
+
+    this.hasSentSelectedImage = true;
+    this.selectCanvasAction.emit({canvas: image.canvas, x, y});
   }
 
   public onRemoveClick(button: HTMLButtonElement, image: ImageEntry, id: number) {
