@@ -1,6 +1,6 @@
 <div class="image-view-wrapper" #listWrapper>
   <div *ngFor="let image of imageList; index as id" [ngClass]="{'image-view': true, 'selected': image.selected}">
-    <label>{{ image.name }}</label>
+    <div class="label-wrapper"><label>{{ image.name }}</label></div>
     <button
       class="remove"
       role="button"

@@ -29,7 +29,7 @@ export class ImageListViewComponent {
   private imageInsertTimer: any;
   private hasSentSelectedImage = false;
 
-  @Output() removeImageAction = new EventEmitter<string | true>();
+  @Output() removeImageAction = new EventEmitter<{canvas: HTMLCanvasElement, url: string, id: number, left: number}>();
   @Output() selectCanvasAction = new EventEmitter<{canvas: HTMLCanvasElement, x: number, y: number}>();
   @ViewChild("listWrapper") listWrapper: ElementRef<HTMLDivElement>;
 
@@ -64,9 +64,10 @@ export class ImageListViewComponent {
     image.ctx.drawImage(image.element, 0, 0, image.width, image.height);
     image.element = null;
     image.state = "loaded";
+    image.src = "";
     const hasWaitingImage = this.imageList.some((imageDesc) => imageDesc.state === "waiting");
     if (!hasWaitingImage && !this.hasSentSelectedImage) {
-      this.sendRandomSelection();
+      setTimeout(() => this.sendRandomSelection(), 10);
     }
     this.initializeDescription(image);
   }
@@ -111,8 +112,10 @@ export class ImageListViewComponent {
       return;
     }
     let limit = 100;
-    while (limit > 0 && (!image || !image.canvas || !image.canvas.width)) {
-      image = this.imageList[Math.random() * this.imageList.length | 0];
+    let imageId;
+    while (limit > 0 && (!image || !image.canvas || !image.canvas.width || !image.labelList)) {
+      imageId = Math.random() * this.imageList.length | 0;
+      image = this.imageList[imageId];
       limit--;
     }
     if (!image || !image.canvas || !image.canvas.width) {
@@ -127,11 +130,11 @@ export class ImageListViewComponent {
 
   public onRemoveClick(button: HTMLButtonElement, image: ImageEntry, id: number) {
     if (this.imageList.length <= 1) {
+      this.removeImageAction.emit({ url: this.imageList[0].src, canvas: this.imageList[0].canvas, id: 0, left: 0 });
       this.imageList = [];
-      this.removeImageAction.emit(true);
       return;
     }
-    this.removeImageAction.emit(image.src);
+    this.removeImageAction.emit({ url: image.src, canvas: image.canvas, id: id, left: this.imageList.length - 1 });
     this.imageList.splice(id, 1);
   }
 

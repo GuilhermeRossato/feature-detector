@@ -64,7 +64,13 @@ export class ImageService {
     );
   }
 
-  getAnnotationFromCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): string[] {
+  getAnnotationFromCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D = null): string[] {
+    if (canvas.hasAttribute("data-label-list")) {
+      return JSON.parse(canvas.getAttribute("data-label-list"));
+    }
+    if (!ctx) {
+      ctx = canvas.getContext("2d");
+    }
     const data = this.getImageAppendedData(canvas, ctx);
     if (!data) {
       return null;
@@ -117,7 +123,10 @@ export class ImageService {
     return list[labelId];
   }
 
-  getFeatureLabelCount(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D): number[] {
+  getFeatureLabelCountList(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D = null): number[] {
+    if (!ctx) {
+      ctx = canvas.getContext("2d");
+    }
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height-1);
     if (!imageData || !imageData.data || imageData.width !== canvas.width || imageData.height !== canvas.height) {
       return null;

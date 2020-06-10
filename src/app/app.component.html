@@ -13,6 +13,7 @@
   <app-image-list-view #imageList
     (removeImageAction)="onRemoveImageRequest($event)"
     (selectCanvasAction)="onCanvasSelect($event)"
+    (addCanvasAction)="onCanvasAdded($event)"
   ></app-image-list-view>
   <app-network-configurator (configChange)="onConfigChange($event)" [selection]="selection"></app-network-configurator>
   <hr />
@@ -21,7 +22,7 @@
       <app-network-actions></app-network-actions>
     </div>
     <div class="network-review-wrapper">
-      <app-network-review [config]="config"></app-network-review>
+      <app-network-review [config]="config" [imageList]="canvasList"></app-network-review>
     </div>
   </div>
 </div>

@@ -42,10 +42,7 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
 
   redrawCanvas() {
     if (!this.left || !this.right) {
-      if (!this.left && !this.right) {
-        return console.warn("Missing both canvases from brush visualization component");
-      }
-      return console.warn(`Missing ${this.left ? "the right" : "the left"} canvas`);
+       return;
     }
     if (!this.left.nativeElement || !this.right.nativeElement) {
       return;
@@ -116,7 +113,6 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
       x: horizontalClamp(inputOrigin.x + size),
       y: verticalClamp(inputOrigin.y + size)
     };
-    console.log(inputOrigin, input.width, inputTarget);
     const inputData = input.getContext("2d").getImageData(
       inputOrigin.x,
       inputOrigin.y,

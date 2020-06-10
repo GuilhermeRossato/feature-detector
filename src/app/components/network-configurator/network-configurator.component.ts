@@ -11,8 +11,8 @@ export class NetworkConfiguratorComponent implements OnInit {
   @Output() configChange = new EventEmitter<{
     brushSize: number,
     brushSpacing: number,
-    brushShape: string,
-    inputFormat: string,
+    brushShape: "square" | "circle" | "diamond",
+    inputFormat: "rgb" | "hsl" | "r" | "g" | "b" | "rg" | "rb" | "grayscale",
     hiddenLayerCount: number,
     hiddenNeuronCount: number,
     activationFunction: string,

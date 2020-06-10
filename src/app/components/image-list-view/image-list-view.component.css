@@ -10,16 +10,26 @@
   padding: 5px 5px 4px 5px;
   margin-bottom: 2px;
   border: 1px solid #BBB;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.image-view label {
+.image-view .label-wrapper {
   display: inline-block;
   font-size: 0.7rem;
   text-align: center;
   width: calc(200px - 25px);
-  margin-bottom: 6px;
-  height: 14px;
   cursor: text;
+}
+
+.image-view .label-wrapper label {
+  display: block;
+  width: 100%;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .image-view button.remove {

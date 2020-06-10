@@ -25,6 +25,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     activationFunction: string,
     epochCount: number
   }
+  public canvasList: HTMLCanvasElement[];
   private state: any = {};
 
   @ViewChild(ImageListViewComponent) imageList: ImageListViewComponent;
@@ -62,34 +63,44 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
+  onCanvasAdded(canvas: HTMLCanvasElement) {
+    this.canvasList.push(canvas);
+  }
+
   onCanvasSelect(selection: {canvas: HTMLCanvasElement, x: number, y: number}) {
     this.selection = selection;
   }
 
-  onRemoveImageRequest(url: string | true) {
+  onRemoveImageRequest(
+    { canvas, url, id, left }: { canvas: HTMLCanvasElement; url: string; id: number; left: number }
+  ) {
     let imageDesc = this.fetchImageListFromStorage();
     if (!imageDesc) {
       return;
     }
-    if (url === true || imageDesc.length <= 1) {
+    if (left <= 0) {
       imageDesc = [];
-      this.saveImageListToCache(imageDesc);
       this.showDropImageOverlay = true;
-      return;
-    }
-    let id;
-    for (let i = 0; i < imageDesc.length; i++) {
-      if (imageDesc[i].url === url) {
-        id = i;
-        break;
+      this.saveImageListToCache(imageDesc);
+    } else {
+      let cachedId;
+      for (let i = 0; i < imageDesc.length; i++) {
+        if (imageDesc[i].url === url) {
+          cachedId = i;
+          break;
+        }
       }
+      if (typeof cachedId !== "number") {
+        console.log("Image has not been saved or has already been removed");
+        return;
+      }
+      imageDesc.splice(cachedId, 1);
+      this.saveImageListToCache(imageDesc);
     }
-    if (typeof id !== "number") {
-      console.log("Image has not been saved or has already been removed");
-      return;
+    if (this.canvasList[id] !== canvas) {
+      throw new Error("Canvas list on image list differs from canvas list on app root");
     }
-    imageDesc.splice(id, 1);
-    this.saveImageListToCache(imageDesc);
+    this.canvasList = this.canvasList.filter(internalCanvas => internalCanvas !== canvas);
   }
 
   fetchImageListFromStorage(): RawFileDescriptor[] {

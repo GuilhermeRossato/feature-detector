@@ -33,9 +33,6 @@ export class DynamicInputComponent implements OnInit, AfterViewInit {
   getInputFromStorage(): string {
     const key = `vfs-input-${this.name}`;
     const value = this.localStorage.getItem(key);
-    if (this.name === "brush-shape") {
-      console.log(value);
-    }
     if (!value && value !== "0") {
       return null;
     }
