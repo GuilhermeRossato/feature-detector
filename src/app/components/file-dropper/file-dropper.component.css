@@ -34,5 +34,17 @@ input[type="file"] {
 }
 
 .subtitle {
+  display: inline-block;
   font-size: 0.9rem;
+}
+
+@media (min-width: 500px) {
+  .title {
+    font-size: 2.3rem;
+  }
+
+  .subtitle {
+    margin-top: 20px;
+    font-size: 1.3rem;
+  }
 }

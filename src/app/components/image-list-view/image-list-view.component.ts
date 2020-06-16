@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter, OnChanges, SimpleChanges, Input } from '@angular/core';
 import { RawFileDescriptor } from '../file-dropper/file-dropper.component';
 import { ImageService } from 'src/app/services/image.service';
+import { ImageFileDescriptor } from '../../app.component';
 
 interface ImageEntry {
   name: string,
@@ -30,7 +31,7 @@ export class ImageListViewComponent implements OnChanges {
   private imageInsertTimer: any;
   private hasSentSelectedImage = false;
 
-  @Input() fileList: RawFileDescriptor[];
+  @Input() fileList: ImageFileDescriptor[];
   @Output() removeImageAction = new EventEmitter<{canvas: HTMLCanvasElement, url: string, id: number, left: number}>();
   @Output() selectCanvasAction = new EventEmitter<{canvas: HTMLCanvasElement, x: number, y: number}>();
   @Output() requestImageClick = new EventEmitter<void>();
@@ -206,7 +207,10 @@ export class ImageListViewComponent implements OnChanges {
 
   onFileListChanged() {
     for (let i = 0; i < this.fileList.length; i++) {
-      let image = this.imageList.find(image => image.fileDesc == this.fileList[i]);
+      if (this.fileList[i].canvas) {
+        continue;
+      }
+      let image = this.imageList.find(image => image.fileDesc == this.fileList[i].fileDesc);
       if (image) {
         continue;
       }
@@ -214,7 +218,8 @@ export class ImageListViewComponent implements OnChanges {
     }
   }
 
-  private onInsertImage(fileDesc: RawFileDescriptor) {
+  private onInsertImage(imageDesc: ImageFileDescriptor) {
+    const fileDesc = imageDesc.fileDesc
     this.imageList.push({
       element: null,
       state: "waiting",

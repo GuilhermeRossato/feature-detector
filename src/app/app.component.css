@@ -46,4 +46,7 @@ h1 {
 
 .network-control-line > div {
   flex-basis: calc(50% - 4px);
+  max-width: calc(50% - 4px);
+  flex-grow: 0;
+  flex-shrink: 0;
 }

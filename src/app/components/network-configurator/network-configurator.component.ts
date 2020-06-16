@@ -16,7 +16,9 @@ export class NetworkConfiguratorComponent implements OnInit {
     hiddenLayerCount: number,
     hiddenNeuronCount: number,
     activationFunction: string,
-    epochCount: number
+    epochCount: number;
+    featureDatasetPercent: number;
+    nonFeaturePercent: number;
   }>();
 
   public brushSize: number = 15;
@@ -28,6 +30,8 @@ export class NetworkConfiguratorComponent implements OnInit {
   public hiddenNeuronCount: number = 17;
   public activationFunction: string = 'sigmoid';
   public epochCount: number = 10000;
+  public featureDatasetPercent: number = 100;
+  public nonFeaturePercent: number = 50;
 
   constructor() {}
 
@@ -53,6 +57,10 @@ export class NetworkConfiguratorComponent implements OnInit {
       this.activationFunction = value;
     } else if (name === "epoch-count") {
       this.epochCount = parseInt(value, 10);
+    } else if (name === "feature-dataset-percent") {
+      this.featureDatasetPercent = parseInt(value, 10);
+    } else if (name === "non-feature-percent") {
+      this.nonFeaturePercent = parseInt(value, 10);
     } else {
       console.warn("Unhandled input", name);
     }
@@ -65,6 +73,8 @@ export class NetworkConfiguratorComponent implements OnInit {
       hiddenNeuronCount: this.hiddenNeuronCount,
       activationFunction: this.activationFunction,
       epochCount: this.epochCount,
+      featureDatasetPercent: this.featureDatasetPercent,
+      nonFeaturePercent: this.nonFeaturePercent,
     });
   }
 

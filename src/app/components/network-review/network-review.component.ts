@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { BrushService } from 'src/app/services/brush.service';
 import { ImageService } from 'src/app/services/image.service';
+import { RawFileDescriptor } from '../file-dropper/file-dropper.component';
 
 @Component({
   selector: 'app-network-review',
@@ -20,7 +21,7 @@ export class NetworkReviewComponent implements OnChanges {
     epochCount: number
   };
 
-  @Input() imageList: HTMLCanvasElement[];
+  @Input() fileList: {canvas: HTMLCanvasElement, fileDesc: RawFileDescriptor}[];
 
   public inputPixels = 0;
   public inputs = 0;
@@ -28,8 +29,8 @@ export class NetworkReviewComponent implements OnChanges {
   public connections = 0;
   public weights = 0;
   public trainingTime = 0;
-  public images = 0;
-  public featurePixels = 0;
+  public images = null;
+  public featurePixels = null;
 
   constructor(
     private brushService: BrushService,
@@ -49,20 +50,44 @@ export class NetworkReviewComponent implements OnChanges {
   }
 
   private onUpdateImages() {
-    if (!this.imageList) {
+    if (!this.fileList) {
       this.outputs = null;
+      this.images = 0;
+      this.featurePixels = 0;
       return;
     }
-    this.outputs = this.imageList.reduce((prev, image) => prev + this.imageService.getAnnotationFromCanvas(image).length, 0);
-    this.images = this.imageList.length;
+    this.images = this.fileList.length;
+    const uniqueLabelList = new Set<string>();
+    let featureCount = 0;
+    for (let desc of this.fileList) {
+      const image = desc.canvas;
+      let labelList = this.imageService.getAnnotationFromCanvas(image, null, false);
+      for (let label of labelList) {
+        uniqueLabelList.add(label);
+      }
+      if (labelList.length) {
+        const countList = this.imageService.getFeatureLabelCountList(image);
+        if (countList) {
+          for (let i = 0; i < countList.length; i++) {
+            const count = countList[i];
+            featureCount++;
+          }
+        }
+      }
+    }
+    this.featurePixels = featureCount;
+    this.outputs = uniqueLabelList.size;
+    this.featurePixels = 0;
   }
 
   private onAfterUpdatedValues() {
     this.trainingTime = 1;
-    this.connections = 0;
-    for (let i = 0; i < this.config.hiddenLayerCount; i++) {
-
-    }
+    let connections = 0;
+    if (this.config && this.config.hiddenLayerCount) {
+      connections = this.inputs * this.config.hiddenNeuronCount * 2;
+      connections += this.config.hiddenNeuronCount * this.config.hiddenNeuronCount * (this.config.hiddenLayerCount - 1);
+    };
+    this.connections = connections;
   }
 
   private getMultiplierFromFormat(format: string): number {
@@ -83,7 +108,7 @@ export class NetworkReviewComponent implements OnChanges {
     if (changes.config) {
       this.onUpdateNetworkConfig();
     }
-    if (changes.imageList) {
+    if (changes.canvasList) {
       this.onUpdateImages();
     }
     this.onAfterUpdatedValues();

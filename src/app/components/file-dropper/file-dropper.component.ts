@@ -31,7 +31,7 @@ export class FileDropperComponent implements OnInit {
           const reader = new FileReader();
           reader.onload = (e) => {
             const url = e.target.result;
-            if (typeof url !== "string" || url.length < 100) {
+            if (typeof url !== 'string' || url.length < 100) {
               return reject(new Error(`Unexpected URL when opening file "${file.name}"`));
             }
             return resolve({
@@ -46,6 +46,7 @@ export class FileDropperComponent implements OnInit {
     }
     const imageDescriptorList = await Promise.all(promises);
 
+    target.value = null;
     this.imageAdded.emit(imageDescriptorList.sort((a, b) => a.name > b.name ? 1 : (a.name < b.name ? -1 : 0)));
   }
 

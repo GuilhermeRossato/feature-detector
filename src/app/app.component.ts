@@ -1,34 +1,39 @@
-import { Component, OnInit, ElementRef, ViewChild, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, HostListener } from '@angular/core';
 import { LocalStorageService } from './services/local-storage.service';
 import { RawFileDescriptor } from './components/file-dropper/file-dropper.component';
-import { ImageListViewComponent } from './components/image-list-view/image-list-view.component';
-import { NetworkConfiguratorComponent } from './components/network-configurator/network-configurator.component';
+
+export interface ImageFileDescriptor {
+  fileDesc: RawFileDescriptor,
+  canvas: HTMLCanvasElement
+}
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-
 export class AppComponent implements OnInit, AfterViewInit {
 
   public showDropImageOverlay = true;
   public error?: Error;
   public selection: {canvas: HTMLCanvasElement, x: number, y: number} = null;
-  public config: {
-    brushSize: number,
-    brushSpacing: number,
-    brushShape: string,
-    inputFormat: string,
-    hiddenLayerCount: number,
-    hiddenNeuronCount: number,
-    activationFunction: string,
-    epochCount: number
-  }
-  public canvasList: HTMLCanvasElement[];
-  private state: any = {};
 
-  @ViewChild(ImageListViewComponent) imageList: ImageListViewComponent;
+  public config: {
+    brushSize: number;
+    brushSpacing: number;
+    brushShape: string;
+    inputFormat: string;
+    hiddenLayerCount: number;
+    hiddenNeuronCount: number;
+    activationFunction: string;
+    epochCount: number;
+    featureDatasetPercent: number;
+    nonFeaturePercent: number;
+  }
+
+  public fileList: ImageFileDescriptor[] = [];
+
+  private state: any = {};
 
   constructor(
     private localStorage: LocalStorageService
@@ -63,8 +68,9 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  onCanvasAdded(canvas: HTMLCanvasElement) {
-    this.canvasList.push(canvas);
+  onCanvasAdded(obj: {canvas: HTMLCanvasElement, file: RawFileDescriptor}) {
+    const file = this.fileList.find(matching => matching.fileDesc === obj.file);
+    file.canvas = obj.canvas;
   }
 
   onCanvasSelect(selection: {canvas: HTMLCanvasElement, x: number, y: number}) {
@@ -92,15 +98,13 @@ export class AppComponent implements OnInit, AfterViewInit {
       }
       if (typeof cachedId !== "number") {
         console.log("Image has not been saved or has already been removed");
-        return;
+      } else {
+        imageDesc.splice(cachedId, 1);
+        this.saveImageListToCache(imageDesc);
       }
-      imageDesc.splice(cachedId, 1);
-      this.saveImageListToCache(imageDesc);
     }
-    if (this.canvasList[id] !== canvas) {
-      throw new Error("Canvas list on image list differs from canvas list on app root");
-    }
-    this.canvasList = this.canvasList.filter(internalCanvas => internalCanvas !== canvas);
+
+    this.fileList = this.fileList.filter(fle => fle.canvas !== canvas);
   }
 
   fetchImageListFromStorage(): RawFileDescriptor[] {
@@ -131,17 +135,7 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   onImageInsert(fileDescList: RawFileDescriptor[], shouldSaveAsCache = true) {
     this.showDropImageOverlay = false;
-    const element = this.imageList;
-    try {
-      if (!element) {
-        throw new Error("Could not find the image list internal component");
-      }
-      for (let fileDesc of fileDescList) {
-        element.insertImage(fileDesc);
-      }
-    } catch (err) {
-      this.error = err;
-    }
+    this.fileList = this.fileList.concat(fileDescList.map(fileDesc => ({canvas: null, fileDesc})));
     if (shouldSaveAsCache) {
       this.saveImageListToCache(fileDescList);
     }
@@ -149,10 +143,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   saveImageListToCache(fileDescList: RawFileDescriptor[]) {
     if (fileDescList.length === 0) {
-      this.localStorage.setItem("vfd-image-list", "[]", null);
+      this.localStorage.setItem('vfd-image-list', '[]', null);
       return;
     }
-    const accumulatedSizeLimit = 2 * 1024 * 1024;
+    const accumulatedSizeLimit = 5 * 1024 * 1024;
     let accumulatedSize = 0;
     let index = 0;
     for (index = 0; index < fileDescList.length; index++) {
@@ -166,9 +160,9 @@ export class AppComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    const fileListSlice = fileDescList.slice(0, index);
+    const fileListSlice = index >= fileDescList.length ? fileDescList : fileDescList.slice(0, index);
 
-    this.localStorage.setItem("vfd-image-list", JSON.stringify(fileListSlice), null);
+    this.localStorage.setItem('vfd-image-list', JSON.stringify(fileListSlice), null);
   }
 
   onConfigChange(obj: {
@@ -192,14 +186,14 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   @HostListener('window:keyup', ['$event'])
   onKeyUp(event) {
-    if (event.code === "Escape" && this.canvasList.length) {
+    if (event.code === "Escape" && this.fileList.length) {
       this.showDropImageOverlay = false;
     }
   }
 
   @HostListener('window:focus', ['$event'])
   onFocus(event) {
-    if (this.showDropImageOverlay && this.canvasList.length) {
+    if (this.showDropImageOverlay && this.fileList.length) {
       setTimeout(() => this.showDropImageOverlay = false, 100);
     }
   }
