@@ -74,7 +74,12 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
     if (input && input.canvas) {
       const point = { x: input.x | 0, y: input.y | 0 };
       this.drawInputBrushAt(right, rightCtx, size, format, spacing, pixels, input.canvas, point);
-      const label = this.imageService.getAnnotationAt(input.canvas, input.canvas.getContext("2d"), point);
+      let label;
+      try {
+        label = this.imageService.getAnnotationAt(input.canvas, input.canvas.getContext("2d"), point);
+      } catch (err) {
+        // Continue regardless of error
+      }
       let prefix;
       let sufix = "";
       if (label) {
@@ -101,18 +106,21 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
     spacing: number,
     pixels: {x: number, y: number}[],
     input: HTMLCanvasElement,
-    pixel: {x: number, y: number}
+    targetPixel: {x: number, y: number}
   ) {
     const horizontalClamp = clamp(0, input.width);
     const verticalClamp = clamp(0, input.height);
     const inputOrigin = {
-      x: horizontalClamp((pixel.x | 0) - (size / 2 | 0)),
-      y: verticalClamp((pixel.y | 0) - (size / 2 | 0))
+      x: horizontalClamp((targetPixel.x | 0) - (size / 2 | 0)),
+      y: verticalClamp((targetPixel.y | 0) - (size / 2 | 0))
     };
     const inputTarget = {
       x: horizontalClamp(inputOrigin.x + size),
       y: verticalClamp(inputOrigin.y + size)
     };
+    if (inputTarget.x - inputOrigin.x <= 0 || inputTarget.y - inputOrigin.y <= 0) {
+      throw new Error("Cannot have 0-sized images");
+    }
     const inputData = input.getContext("2d").getImageData(
       inputOrigin.x,
       inputOrigin.y,
@@ -124,8 +132,8 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
     for (let pixel of pixels) {
       const localX = (pixel.x | 0) + (size / 2 | 0);
       const localY = (pixel.y | 0) + (size / 2 | 0);
-      const inputX = (localX + inputOrigin.x) | 0;
-      const inputY = (localY + inputOrigin.y) | 0;
+      const inputX = (localX + (targetPixel.x | 0) - (size / 2 | 0)) | 0;
+      const inputY = (localY + (targetPixel.y | 0) - (size / 2 | 0)) | 0;
       if (localX < 0 || localX > size || localY < 0 || localY > size) {
         throw new Error(`Pixel outside boundary: Original: ${pixel.x}, ${pixel.y} Size: ${size} Converted: ${localX} ${localY}`);
       }
@@ -167,18 +175,26 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
           };
         }
       }
-
+      const lx = localX - (spacing / 2|0);
+      const ly = localY - (spacing / 2|0);
       if (color) {
-        let i = (localY * size + localX) * 4;
-        imageData.data[i++] = color.r;
-        imageData.data[i++] = color.g;
-        imageData.data[i++] = color.b;
-        imageData.data[i++] = 255;
+        let i;
+        if (lx >= 0 && ly >= 0 && lx < imageData.width && ly < imageData.height) {
+          i = (ly * size + lx) * 4;
+          imageData.data[i++] = color.r;
+          imageData.data[i++] = color.g;
+          imageData.data[i++] = color.b;
+          imageData.data[i++] = 255;
+        }
         if (spacing >= 1) {
           for (let cy = 0; cy < spacing + 1; cy ++) {
-            i = ((localY+cy) * size + (localX)) * 4;
+            if (ly + cy < 0 || ly + cy >= imageData.height) {
+              continue;
+            }
+            i = ((ly+cy) * size + (lx)) * 4;
             for (let cx = 0; cx < spacing + 1; cx ++) {
-              if (localX + cx >= imageData.width || localY + cy >= imageData.height) {
+              if (lx + cx < 0 || lx + cx >= imageData.width) {
+                i+=4;
                 continue;
               }
               imageData.data[i++] = color.r;
@@ -189,7 +205,7 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
           }
         }
       } else {
-        imageData.data[(localY * size + localX) * 4 + 3] = 0;
+        //imageData.data[(localX * size + localY) * 4 + 3] = 0;
       }
     }
     ctx.putImageData(imageData, 0, 0);
