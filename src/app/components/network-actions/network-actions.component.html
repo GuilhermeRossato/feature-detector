@@ -8,6 +8,15 @@
   </div>
   <div class="action-group">
     <label>Training</label>
+    <div class="input-group">
+      <app-dynamic-input
+        type="checkbox"
+        name="include-border-on-dataset"
+        [startValue]="includeBorderOnDataset"
+        (inputChange)="onIncludeBorderChange($event)"
+      ></app-dynamic-input>
+      <label title="Include areas in which the brush cannot view all its inputs due to image borders in the training dataset" style="cursor: pointer" (click)="$event.target.parentNode.querySelector('input').click()">Include image borders on dataset</label>
+    </div>
     <button type="button" role="button">Start Training</button>
     <button type="button" role="button">Stop Training</button>
   </div>

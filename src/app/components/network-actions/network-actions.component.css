@@ -2,19 +2,42 @@ hr {
   margin-right: 10px;
 }
 
-.network-review ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
 .network-actions .action-group + .action-group {
   margin-top: 8px;
 }
 
 .network-actions .action-group label {
   display: block;
+  margin-bottom: 5px;
 }
+
 .network-actions .action-group button + button {
   margin-left: 5px;
+}
+
+.input-group {
+  display: flex;
+  margin: 0px;
+  max-width: 100%;
+}
+
+.input-group input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.input-group app-dynamic-input[type="checkbox"] + label {
+  margin-left: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.input-group label {
+  font-size: 15px;
+  line-height: 20px;
+}
+
+button {
+  cursor: pointer;
+  padding: 4px 10px;
 }
