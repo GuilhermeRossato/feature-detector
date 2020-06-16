@@ -10,7 +10,7 @@ export class DynamicInputComponent implements OnInit, AfterViewInit {
 
   @Input() name: string;
   @Input() startValue: string;
-  @Input() type: "text" | "number" | "select";
+  @Input() type: "text" | "number" | "select" | "checkbox";
   @Input() options?: {value: string, label: string}[];
   @Input() min?: number;
   @Input() max?: number;
@@ -27,7 +27,7 @@ export class DynamicInputComponent implements OnInit, AfterViewInit {
   ) { }
 
   ngOnInit(): void {
-    this.value = this.startValue || "";
+    this.value = this.startValue.toString() || "";
   }
 
   getInputFromStorage(): string {
@@ -45,7 +45,7 @@ export class DynamicInputComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    if ((this.value === this.startValue) || (this.value === "" && this.startValue === undefined)) {
+    if ((this.value === this.startValue.toString()) || (this.value === "" && this.startValue === undefined)) {
       const cachedValue = this.getInputFromStorage();
       setTimeout(() => {
         if (cachedValue || cachedValue === "0") {
@@ -58,7 +58,7 @@ export class DynamicInputComponent implements OnInit, AfterViewInit {
   }
 
   onChange(event: Event, element: HTMLInputElement | HTMLSelectElement) {
-    const value = element.value;
+    const value = element instanceof HTMLInputElement && this.type === "checkbox" ? element.checked.toString() : element.value;
     this.applyChange(value);
     if (this.error === null) {
       this.setInputToStorage(value);

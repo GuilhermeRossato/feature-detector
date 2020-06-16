@@ -1,3 +1,7 @@
+:host {
+  display: inline-block;
+}
+
 input, select, textarea {
   padding: 4px 6px;
   margin: 5px 0px;
@@ -6,4 +10,10 @@ input, select, textarea {
   box-sizing: border-box;
   border: 1px solid #767676;
   border-radius: 2px;
+}
+
+input[type="checkbox"] {
+  min-width: 20px;
+  min-height: 20px;
+  margin: 0;
 }

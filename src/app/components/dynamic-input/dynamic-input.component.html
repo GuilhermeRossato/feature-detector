@@ -28,3 +28,10 @@
   [name]="name"
   (change)="onChange($event, $event.target)"
 ><option *ngFor="let option of options" [value]="option.value">{{ option.label }}</option></select>
+<input
+  *ngIf="type === 'checkbox'"
+  type="checkbox"
+  [checked]="value === '1' || value === 'true'"
+  [name]="name"
+  (change)="onChange($event, $event.target)"
+/>
