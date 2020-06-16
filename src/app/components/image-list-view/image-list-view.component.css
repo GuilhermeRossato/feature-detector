@@ -5,6 +5,7 @@
 }
 
 .image-view {
+  min-width: 200px;
   max-width: 200px;
   height: 200px;
   padding: 5px 5px 4px 5px;
@@ -20,7 +21,6 @@
   display: inline-block;
   font-size: 0.7rem;
   text-align: center;
-  width: calc(200px - 25px);
   cursor: text;
 }
 
@@ -47,6 +47,7 @@
   align-items: center;
   overflow: hidden;
   height: calc(200px - 40px);
+  width: 100%;
 }
 
 .image-view + .image-view {
@@ -55,6 +56,7 @@
 
 .image-view canvas {
   transform: scale(0.5);
+  image-rendering: pixelated;
 }
 
 .image-view canvas:hover {
@@ -67,4 +69,14 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.image-view.new-image {
+  min-width: 100px;
+  width: 100px;
+  margin-right: 10px;
+}
+
+.image-view.new-image button {
+  padding: 5px 10px;
 }

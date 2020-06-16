@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, Output, EventEmitter, OnChanges, SimpleChanges, Input } from '@angular/core';
 import { RawFileDescriptor } from '../file-dropper/file-dropper.component';
 import { ImageService } from 'src/app/services/image.service';
 
@@ -15,7 +15,8 @@ interface ImageEntry {
   labelList?: string[],
   description?: string,
   selected: boolean;
-  offset: {x: number, y: number}
+  offset: {x: number, y: number},
+  fileDesc: RawFileDescriptor
 }
 
 @Component({
@@ -23,14 +24,17 @@ interface ImageEntry {
   templateUrl: './image-list-view.component.html',
   styleUrls: ['./image-list-view.component.css']
 })
-export class ImageListViewComponent {
+export class ImageListViewComponent implements OnChanges {
 
   public imageList: ImageEntry[] = [];
   private imageInsertTimer: any;
   private hasSentSelectedImage = false;
 
+  @Input() fileList: RawFileDescriptor[];
   @Output() removeImageAction = new EventEmitter<{canvas: HTMLCanvasElement, url: string, id: number, left: number}>();
   @Output() selectCanvasAction = new EventEmitter<{canvas: HTMLCanvasElement, x: number, y: number}>();
+  @Output() requestImageClick = new EventEmitter<void>();
+  @Output() addCanvasAction = new EventEmitter<{canvas: HTMLCanvasElement, file: RawFileDescriptor}>();
   @ViewChild("listWrapper") listWrapper: ElementRef<HTMLDivElement>;
 
   constructor(
@@ -64,12 +68,12 @@ export class ImageListViewComponent {
     image.ctx.drawImage(image.element, 0, 0, image.width, image.height);
     image.element = null;
     image.state = "loaded";
-    image.src = "";
     const hasWaitingImage = this.imageList.some((imageDesc) => imageDesc.state === "waiting");
     if (!hasWaitingImage && !this.hasSentSelectedImage) {
       setTimeout(() => this.sendRandomSelection(), 10);
     }
     this.initializeDescription(image);
+    this.addCanvasAction.emit({canvas: canvasElement, file: image.fileDesc});
   }
 
   public onMouseOut(event: MouseEvent, canvas: HTMLCanvasElement, image: ImageEntry, id: number) {
@@ -79,26 +83,29 @@ export class ImageListViewComponent {
 
   public onMouseMove(event: MouseEvent, canvas: HTMLCanvasElement, image: ImageEntry, id: number) {
     const parentRect = canvas.parentElement.getBoundingClientRect();
-    const zoom = 1;
-    const x = (event.clientX - parentRect.left + 0.5) * zoom;
-    const y = (event.clientY - parentRect.top) * zoom - 0.5;
-    image.offset = {
-      x: (canvas.width - parentRect.width - 2) * (0.5 - x / parentRect.width),
-      y: (canvas.height - parentRect.height - 2) * (0.5 - y / parentRect.height)
+    const isLargeImage = (canvas.width > parentRect.width * 1.5 || canvas.height > parentRect.height * 1.5)
+    const zoom = isLargeImage ? 1 : 0.5;
+
+    if (isLargeImage) {
+      const x = (event.clientX - parentRect.left + 0.5) * zoom;
+      const y = (event.clientY - parentRect.top) * zoom - 0.5;
+      image.offset = {
+        x: (canvas.width - parentRect.width - 2) * (0.5 - x / parentRect.width),
+        y: (canvas.height - parentRect.height - 2) * (0.5 - y / parentRect.height)
+      }
     }
-    canvas.style.transform = `scale(1) translate(${image.offset.x.toFixed(3)}px, ${image.offset.y.toFixed(3)}px)`;
+    canvas.style.transform = `scale(${1/zoom}) translate(${image.offset.x.toFixed(3)}px, ${image.offset.y.toFixed(3)}px)`;
   }
 
   public onImageClick(event: MouseEvent, canvas: HTMLCanvasElement, image: ImageEntry, id: number) {
-    if (!image.labelList || !image.labelList.length) {
-      return;
-    }
     if (image.canvas !== canvas) {
       console.warn("Updated canvas");
       image.canvas = canvas;
     }
     const rect = canvas.getBoundingClientRect();
-    const zoom = 1;
+    const parentRect = canvas.parentElement.getBoundingClientRect();
+    const isLargeImage = (canvas.width > parentRect.width || canvas.height > parentRect.height)
+    const zoom = isLargeImage ? 1 : 0.5;
     const x = (event.clientX - rect.left + 0.5) * zoom;
     const y = (event.clientY - rect.top) * zoom - 0.5;
 
@@ -191,19 +198,40 @@ export class ImageListViewComponent {
     }
   }
 
-  public insertImage(fileDesc: RawFileDescriptor) {
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.fileList) {
+      this.onFileListChanged();
+    }
+  }
+
+  onFileListChanged() {
+    for (let i = 0; i < this.fileList.length; i++) {
+      let image = this.imageList.find(image => image.fileDesc == this.fileList[i]);
+      if (image) {
+        continue;
+      }
+      this.onInsertImage(this.fileList[i]);
+    }
+  }
+
+  private onInsertImage(fileDesc: RawFileDescriptor) {
     this.imageList.push({
       element: null,
       state: "waiting",
       src: fileDesc.url,
       name: fileDesc.name,
       selected: false,
-      offset: {x: 0, y: 0}
+      offset: {x: 0, y: 0},
+      fileDesc: fileDesc
     });
     if (this.imageInsertTimer) {
       clearTimeout(this.imageInsertTimer);
     }
     this.imageInsertTimer = setTimeout(this.updateImageListElement.bind(this), 200);
+  }
+
+  onAddImageClick() {
+    this.requestImageClick.emit();
   }
 
 }
