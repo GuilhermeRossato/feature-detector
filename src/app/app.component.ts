@@ -179,9 +179,28 @@ export class AppComponent implements OnInit, AfterViewInit {
     hiddenLayerCount: number,
     hiddenNeuronCount: number,
     activationFunction: string,
-    epochCount: number
+    epochCount: number,
+    featureDatasetPercent: number,
+    nonFeaturePercent: number,
   }) {
     this.config = obj;
   }
 
+  onRequestImageAction() {
+    this.showDropImageOverlay = true;
+  }
+
+  @HostListener('window:keyup', ['$event'])
+  onKeyUp(event) {
+    if (event.code === "Escape" && this.canvasList.length) {
+      this.showDropImageOverlay = false;
+    }
+  }
+
+  @HostListener('window:focus', ['$event'])
+  onFocus(event) {
+    if (this.showDropImageOverlay && this.canvasList.length) {
+      setTimeout(() => this.showDropImageOverlay = false, 100);
+    }
+  }
 }
