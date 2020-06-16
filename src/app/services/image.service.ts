@@ -64,7 +64,7 @@ export class ImageService {
     );
   }
 
-  getAnnotationFromCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D = null): string[] {
+  getAnnotationFromCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D = null, required = true): string[] {
     if (canvas.hasAttribute("data-label-list")) {
       return JSON.parse(canvas.getAttribute("data-label-list"));
     }
@@ -76,7 +76,11 @@ export class ImageService {
       return null;
     }
     if (data[0] !== 138) {
-      throw new Error("Image data does not start with expected value of 138, got " + data[0]);
+      if (required) {
+        throw new Error("Image data does not start with expected value of 138, got " + data[0]);
+      } else {
+        return [];
+      }
     }
     let i = 4;
     const maxIndex = data.length - 4;
@@ -128,7 +132,7 @@ export class ImageService {
       ctx = canvas.getContext("2d");
     }
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height-1);
-    if (!imageData || !imageData.data || imageData.width !== canvas.width || imageData.height !== canvas.height) {
+    if (!imageData || !imageData.data || imageData.width !== canvas.width || imageData.height !== canvas.height - 1) {
       return null;
     }
     let counts = [];
