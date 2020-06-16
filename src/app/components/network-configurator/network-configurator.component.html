@@ -167,13 +167,47 @@
         name="epoch-count"
         min="1"
         max="10000000"
-        startValue="10000"
+        [startValue]="epochCount"
         (inputChange)="onInputChange($event.name, $event.value)"
       ></app-dynamic-input>
     </div>
     <div class="explanation">
       <h4 class="title">The number of full dataset passes</h4>
       <small class="description">How many times the network will train with the full dataset.  Depends on the complexity of your features. Excessively large values will most definitely cause overfitting.</small>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Feature Dataset Percent</label>
+      <app-dynamic-input
+        type="number"
+        name="feature-dataset-percent"
+        min="1"
+        max="100"
+        [startValue]="featureDatasetPercent"
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
+    </div>
+    <div class="explanation">
+      <h4 class="title">The percent of dataset to include in the training</h4>
+      <small class="description">Each data unit is a single pixel surrounded by its neighbors according to your brush pixels, this means that every feature pixel is a dataset. This percent value (between 1 and 100) allow you to control the dataset resulting size.</small>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Non-Feature Percent</label>
+      <app-dynamic-input
+        type="number"
+        name="non-feature-percent"
+        min="0"
+        max="10000"
+        [startValue]="nonFeaturePercent"
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
+    </div>
+    <div class="explanation">
+      <h4 class="title">The percent of non-features in the dataset</h4>
+      <small class="description">This value allows you to control your network ability to detect areas that are not marked as features by setting aside a percent of the dataset that won't contain a feature so that the network can learn that some pixels are uninteresting.</small>
     </div>
   </div>
 </form>
