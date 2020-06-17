@@ -1,10 +1,12 @@
 <div class="network-review">
   <ul>
-    <li><span>{{ featurePixels }}</span> feature pixels in <span>{{ images }}</span> images</li>
-    <li><span>{{ inputs }}</span> inputs in <span>{{ inputPixels }}</span> pixels</li>
-    <li><span>{{ outputs }}</span> outputs</li>
-    <li><span>{{ connections }}</span> connections</li>
-    <li><span>{{ weights }}</span> weights</li>
-    <li>Estimated Training Time: <span>unknown</span></li>
+    <li title="The number of feature pixels in all of the uploaded images"><span>{{ thousandsSeparators(featurePixels) }}</span> feature pixels in <span>{{ thousandsSeparators(images) }}</span> images<span class="question-subscript">(?)</span></li>
+    <li title="Pixels that will be added as feature from your feature pixels in the images"><span>{{ thousandsSeparators(usableFeatureCount) }}</span> usable feature pixels in the dataset<span class="question-subscript">(?)</span></li>
+    <li title="Pixels that will be added as 'non-features' from parts of your image that does not contain features"><span>{{ thousandsSeparators(nonFeatureCount) }}</span> non-feature pixels in dataset<span class="question-subscript">(?)</span></li>
+    <li title="The sum of usable feature pixels and non-feature pixels"><span>{{ thousandsSeparators(usableFeatureCount + nonFeatureCount) }}</span> total dataset size<span class="question-subscript">(?)</span></li>
+    <li title="The number of inputs the network will have and how many pixels it represents"><span>{{ thousandsSeparators(inputs) }}</span> inputs in <span>{{ thousandsSeparators(inputPixels) }}</span> pixels<span class="question-subscript">(?)</span></li>
+    <li title="The number of outputs your network will have. It is based on how many individual and unique labels are present in the uploaded images"><span>{{ thousandsSeparators(outputs) }}</span> outputs<span class="question-subscript">(?)</span></li>
+    <li title="The number of interconnections (and weights) between neurons, including bias connections."><span>{{ thousandsSeparators(connections) }}</span> connections<span class="question-subscript">(?)</span></li>
+    <li title="An estimate of the training time based on these parameters made by a pre-trained neural network">Estimated Training Time: <span>unknown</span><span class="question-subscript">(?)</span></li>
   </ul>
 </div>

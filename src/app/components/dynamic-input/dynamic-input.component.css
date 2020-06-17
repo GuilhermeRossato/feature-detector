@@ -16,4 +16,5 @@ input[type="checkbox"] {
   min-width: 20px;
   min-height: 20px;
   margin: 0;
+  cursor: pointer;
 }

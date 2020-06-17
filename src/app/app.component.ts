@@ -2,9 +2,14 @@ import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, HostListener }
 import { LocalStorageService } from './services/local-storage.service';
 import { RawFileDescriptor } from './components/file-dropper/file-dropper.component';
 
+
 export interface ImageFileDescriptor {
   fileDesc: RawFileDescriptor,
   canvas: HTMLCanvasElement
+}
+
+function sortFileList(fileList: ImageFileDescriptor[]) {
+  return fileList.sort((a, b) => a.fileDesc.time - b.fileDesc.time);
 }
 
 @Component({
@@ -70,7 +75,11 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   onCanvasAdded(obj: {canvas: HTMLCanvasElement, file: RawFileDescriptor}) {
     const file = this.fileList.find(matching => matching.fileDesc === obj.file);
+    if (!file) {
+      throw new Error("Could not find correspondent file");
+    }
     file.canvas = obj.canvas;
+    this.fileList = sortFileList(this.fileList.filter(listFile => listFile != file).concat([file]));
   }
 
   onCanvasSelect(selection: {canvas: HTMLCanvasElement, x: number, y: number}) {
@@ -88,23 +97,11 @@ export class AppComponent implements OnInit, AfterViewInit {
       imageDesc = [];
       this.showDropImageOverlay = true;
       this.saveImageListToCache(imageDesc);
-    } else {
-      let cachedId;
-      for (let i = 0; i < imageDesc.length; i++) {
-        if (imageDesc[i].url === url) {
-          cachedId = i;
-          break;
-        }
-      }
-      if (typeof cachedId !== "number") {
-        console.log("Image has not been saved or has already been removed");
-      } else {
-        imageDesc.splice(cachedId, 1);
-        this.saveImageListToCache(imageDesc);
-      }
+      return;
     }
 
-    this.fileList = this.fileList.filter(fle => fle.canvas !== canvas);
+    this.fileList = sortFileList(this.fileList.filter(file => file.canvas !== canvas));
+    this.saveImageListToCache(this.fileList.map(file => file.fileDesc));
   }
 
   fetchImageListFromStorage(): RawFileDescriptor[] {
@@ -130,14 +127,14 @@ export class AppComponent implements OnInit, AfterViewInit {
     if (!imageDesc) {
       return;
     }
-    this.onImageInsert(imageDesc, false);
+    this.onImagesInsert(imageDesc.filter((image, i) => image === imageDesc.find(innerImage => innerImage.url === image.url)), false);
   }
 
-  onImageInsert(fileDescList: RawFileDescriptor[], shouldSaveAsCache = true) {
+  onImagesInsert(fileDescList: RawFileDescriptor[], shouldSaveAsCache = true) {
     this.showDropImageOverlay = false;
-    this.fileList = this.fileList.concat(fileDescList.map(fileDesc => ({canvas: null, fileDesc})));
+    this.fileList = sortFileList(this.fileList.concat(fileDescList.map(fileDesc => ({canvas: null, fileDesc}))));
     if (shouldSaveAsCache) {
-      this.saveImageListToCache(fileDescList);
+      this.saveImageListToCache(this.fileList.map(file => file.fileDesc));
     }
   }
 

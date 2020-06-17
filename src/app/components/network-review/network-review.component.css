@@ -5,3 +5,10 @@
   padding: 0;
   line-height: 24px;
 }
+
+.question-subscript {
+  color: #666;
+  font-size: 11px;
+  transform: translate(6px, -6px);
+  display: inline-block;
+}

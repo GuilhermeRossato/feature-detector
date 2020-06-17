@@ -3,7 +3,8 @@ import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 export interface RawFileDescriptor {
   name: string,
   url: string,
-  size: number
+  size: number,
+  time: number,
 }
 
 @Component({
@@ -24,6 +25,7 @@ export class FileDropperComponent implements OnInit {
     const files = target.files;
 
     const promises: Promise<RawFileDescriptor>[] = [];
+    const time = (new Date()).getTime();
     for (let i = files.length-1; i >= 0; i--) {
       const file = files[i];
       promises.push(
@@ -37,17 +39,21 @@ export class FileDropperComponent implements OnInit {
             return resolve({
               name: file.name,
               url: url,
-              size: file.size
-            })
+              size: file.size,
+              time: time
+            });
           }
 
           reader.readAsDataURL(file);
         }));
     }
-    const imageDescriptorList = await Promise.all(promises);
+    const fileDescList = await Promise.all(promises);
+    const sortedFileList = fileDescList.sort((a, b) => a.name > b.name ? -1 : (a.name < b.name ? 1 : 0));
+
+    sortedFileList.forEach((file, i) => file.time -= i);
 
     target.value = null;
-    this.imageAdded.emit(imageDescriptorList.sort((a, b) => a.name > b.name ? 1 : (a.name < b.name ? -1 : 0)));
+    this.imageAdded.emit(sortedFileList);
   }
 
   onDragOver(event: Event, dataTransfer: DataTransfer) {

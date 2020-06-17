@@ -18,7 +18,9 @@ export class NetworkReviewComponent implements OnChanges {
     hiddenLayerCount: number,
     hiddenNeuronCount: number,
     activationFunction: string,
-    epochCount: number
+    epochCount: number,
+    featureDatasetPercent: number,
+    nonFeaturePercent: number
   };
 
   @Input() fileList: {canvas: HTMLCanvasElement, fileDesc: RawFileDescriptor}[];
@@ -27,21 +29,30 @@ export class NetworkReviewComponent implements OnChanges {
   public inputs = 0;
   public outputs = 0;
   public connections = 0;
-  public weights = 0;
   public trainingTime = 0;
   public images = null;
   public featurePixels = null;
+  public usableFeatureCount = null;
+  public nonFeatureCount = null;
 
   constructor(
     private brushService: BrushService,
     private imageService: ImageService
   ) { }
 
+  thousandsSeparators(num: number, separator = ","): string {
+    if (typeof num !== 'number') {
+      return '?';
+    }
+    let numParts = num.toString().split('.');
+    numParts[0] = numParts[0].replace(/\B(?=(\d{3})+(?!\d))/g, separator);
+    return numParts.join('.');
+  };
+
   private onUpdateNetworkConfig() {
     if (!this.config) {
       this.inputPixels = null;
       this.inputs = null;
-      this.weights = null;
       return;
     }
     const pixels = this.brushService.getBrushPixels(this.config.brushSize, this.config.brushSpacing, this.config.brushShape);
@@ -61,46 +72,64 @@ export class NetworkReviewComponent implements OnChanges {
     let featureCount = 0;
     for (let desc of this.fileList) {
       const image = desc.canvas;
-      let labelList = this.imageService.getAnnotationFromCanvas(image, null, false);
+      if (!image) {
+        continue;
+      }
+      const labelList = this.imageService.getAnnotationFromCanvas(image, null, false);
       for (let label of labelList) {
         uniqueLabelList.add(label);
       }
       if (labelList.length) {
         const countList = this.imageService.getFeatureLabelCountList(image);
+        // console.log(featureCount, countList, countList.length);
         if (countList) {
           for (let i = 0; i < countList.length; i++) {
             const count = countList[i];
-            featureCount++;
+            featureCount += isNaN(count) ? 0 : count;
           }
         }
       }
     }
     this.featurePixels = featureCount;
     this.outputs = uniqueLabelList.size;
-    this.featurePixels = 0;
+
   }
 
   private onAfterUpdatedValues() {
     this.trainingTime = 1;
     let connections = 0;
     if (this.config && this.config.hiddenLayerCount) {
-      connections = this.inputs * this.config.hiddenNeuronCount * 2;
+      connections = this.inputs * this.config.hiddenNeuronCount;
       connections += this.config.hiddenNeuronCount * this.config.hiddenNeuronCount * (this.config.hiddenLayerCount - 1);
-    };
+      connections += this.outputs * this.config.hiddenNeuronCount;
+      connections += this.config.hiddenLayerCount; // Biases
+    } else {
+      connections = this.inputs * this.outputs;
+    }
+    if (this.config && typeof this.featurePixels === "number" && typeof this.config.featureDatasetPercent === "number" && !isNaN(this.config.featureDatasetPercent)) {
+      this.usableFeatureCount = Math.floor(this.featurePixels * (this.config.featureDatasetPercent / 100));
+    } else {
+      this.usableFeatureCount = null;
+    }
+    if (this.config && typeof this.featurePixels === "number" && typeof this.config.nonFeaturePercent === "number" && !isNaN(this.config.nonFeaturePercent)) {
+      this.nonFeatureCount = Math.floor(this.featurePixels * (this.config.nonFeaturePercent / 100));
+    } else {
+      this.nonFeatureCount = null;
+    }
     this.connections = connections;
   }
 
   private getMultiplierFromFormat(format: string): number {
     switch (format) {
-      case "hsl":
-      case "grayscale":
-      case "rgb": return 3;
-      case "r":
-      case "g":
-      case "b": return 1;
-      case "rg":
-      case "rb": return 2;
-      default: throw new Error("Unknown format");
+      case 'hsl':
+      case 'grayscale':
+      case 'rgb': return 3;
+      case 'r':
+      case 'g':
+      case 'b': return 1;
+      case 'rg':
+      case 'rb': return 2;
+      default: throw new Error('Unknown format');
     }
   }
 
@@ -108,7 +137,7 @@ export class NetworkReviewComponent implements OnChanges {
     if (changes.config) {
       this.onUpdateNetworkConfig();
     }
-    if (changes.canvasList) {
+    if (changes.fileList) {
       this.onUpdateImages();
     }
     this.onAfterUpdatedValues();
