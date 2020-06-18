@@ -9,6 +9,7 @@
     "src/polyfills.ts"
   ],
   "include": [
+    "src/assets/brainjs/brain.d.ts",
     "src/**/*.d.ts"
   ]
 }

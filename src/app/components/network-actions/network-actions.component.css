@@ -41,3 +41,14 @@ button {
   cursor: pointer;
   padding: 4px 10px;
 }
+
+.error-group {
+  color: #A33;
+  font-weight: bold;
+}
+
+.progress-list {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 15px;
+}

@@ -1,5 +1,5 @@
 <div class="network-actions">
-  <div class="action-group">
+  <div class="action-group" *ngIf="false">
     <label>Network</label>
     <button type="button" role="button">Save</button>
     <button type="button" role="button">Load</button>
@@ -17,7 +17,16 @@
       ></app-dynamic-input>
       <label title="Include areas in which the brush cannot view all its inputs due to image borders in the training dataset" style="cursor: pointer" (click)="$event.target.parentNode.querySelector('input').click()">Include image borders on dataset</label>
     </div>
-    <button type="button" role="button">Start Training</button>
-    <button type="button" role="button">Stop Training</button>
+    <button type="button" role="button" (click)="onStartTrainingClick()" *ngIf="!training">Start Training</button>
+    <button type="button" role="button" (click)="onStopTrainingClick()" *ngIf="training">Stop Training</button>
+    <button type="button" role="button" (click)="onResetNetworkClick()" *ngIf="network" [disabled]="training">Reset Network</button>
+    <div class="progress-list">
+      <div *ngFor="let step of steps; index as index">
+        <span>{{ step.label }}</span>
+        <span class="time" title="{{ step.date.toISOString() }}">{{ ' ' + getTimeString(index, step.date) }}</span>
+        <span class="memory" *ngIf="step.memory" title="Memory usage percent from available according to your browser"> (Mem usage: {{ (step.memory * 100).toFixed(2) }}%)</span>
+      </div>
+    </div>
   </div>
+  <div class="action-group error-group" *ngIf="error">{{ error.message }}</div>
 </div>
