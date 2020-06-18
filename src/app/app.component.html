@@ -21,7 +21,7 @@
   <hr />
   <div class="network-control-line">
     <div class="network-actions-wrapper">
-      <app-network-actions></app-network-actions>
+      <app-network-actions [config]="config" [fileList]="fileList"></app-network-actions>
     </div>
     <div class="network-review-wrapper">
       <app-network-review [config]="config" [fileList]="fileList"></app-network-review>

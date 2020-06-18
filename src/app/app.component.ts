@@ -1,6 +1,7 @@
 import { Component, OnInit, ElementRef, ViewChild, AfterViewInit, HostListener } from '@angular/core';
 import { LocalStorageService } from './services/local-storage.service';
 import { RawFileDescriptor } from './components/file-dropper/file-dropper.component';
+import { NetworkConfiguration } from './components/network-configurator/network-configurator.component';
 
 
 export interface ImageFileDescriptor {
@@ -23,18 +24,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   public error?: Error;
   public selection: {canvas: HTMLCanvasElement, x: number, y: number} = null;
 
-  public config: {
-    brushSize: number;
-    brushSpacing: number;
-    brushShape: string;
-    inputFormat: string;
-    hiddenLayerCount: number;
-    hiddenNeuronCount: number;
-    activationFunction: string;
-    epochCount: number;
-    featureDatasetPercent: number;
-    nonFeaturePercent: number;
-  }
+  public config: NetworkConfiguration;
 
   public fileList: ImageFileDescriptor[] = [];
 
@@ -162,18 +152,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.localStorage.setItem('vfd-image-list', JSON.stringify(fileListSlice), null);
   }
 
-  onConfigChange(obj: {
-    brushSize: number,
-    brushSpacing: number,
-    brushShape: string,
-    inputFormat: string,
-    hiddenLayerCount: number,
-    hiddenNeuronCount: number,
-    activationFunction: string,
-    epochCount: number,
-    featureDatasetPercent: number,
-    nonFeaturePercent: number,
-  }) {
+  onConfigChange(obj: NetworkConfiguration) {
     this.config = obj;
   }
 

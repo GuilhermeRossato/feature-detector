@@ -1,5 +1,18 @@
 import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 
+export interface NetworkConfiguration {
+  brushSize: number,
+  brushSpacing: number,
+  brushShape: "square" | "circle" | "diamond",
+  inputFormat: "rgb" | "hsl" | "r" | "g" | "b" | "rg" | "rb" | "grayscale",
+  hiddenLayerCount: number,
+  hiddenNeuronCount: number,
+  activationFunction: "sigmoid" | "relu" | "leaky-relu" | "tanh",
+  epochCount: number;
+  featureDatasetPercent: number;
+  nonFeaturePercent: number;
+};
+
 @Component({
   selector: 'app-network-configurator',
   templateUrl: './network-configurator.component.html',
@@ -8,18 +21,7 @@ import { Component, OnInit, Input, EventEmitter, Output } from '@angular/core';
 export class NetworkConfiguratorComponent implements OnInit {
 
   @Input() selection: {canvas: HTMLCanvasElement, x: number, y: number} = null;
-  @Output() configChange = new EventEmitter<{
-    brushSize: number,
-    brushSpacing: number,
-    brushShape: "square" | "circle" | "diamond",
-    inputFormat: "rgb" | "hsl" | "r" | "g" | "b" | "rg" | "rb" | "grayscale",
-    hiddenLayerCount: number,
-    hiddenNeuronCount: number,
-    activationFunction: string,
-    epochCount: number;
-    featureDatasetPercent: number;
-    nonFeaturePercent: number;
-  }>();
+  @Output() configChange = new EventEmitter<NetworkConfiguration>();
 
   public brushSize: number = 15;
   public brushSpacing: number = 2;
@@ -71,7 +73,7 @@ export class NetworkConfiguratorComponent implements OnInit {
       inputFormat: this.inputFormat,
       hiddenLayerCount: this.hiddenLayerCount,
       hiddenNeuronCount: this.hiddenNeuronCount,
-      activationFunction: this.activationFunction,
+      activationFunction: this.activationFunction as any,
       epochCount: this.epochCount,
       featureDatasetPercent: this.featureDatasetPercent,
       nonFeaturePercent: this.nonFeaturePercent,

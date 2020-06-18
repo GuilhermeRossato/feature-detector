@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { RawFileDescriptor } from '../components/file-dropper/file-dropper.component';
 
 function encodeCharCode(cCode) {
   if (isNaN(cCode) || !cCode || cCode < 10 || cCode > 127) {
@@ -62,6 +63,54 @@ export class ImageService {
       (data[2] === 199) &&
       (data[3] === 124 || data[3] === 255)
     );
+  }
+
+  getFeaturePixelCount({canvas, fileDesc}: {canvas: HTMLCanvasElement, fileDesc: RawFileDescriptor}) {
+    const labelList = this.getAnnotationFromCanvas(canvas, null, false);
+    if (!labelList.length) {
+       return 0;
+    }
+    const countList = this.getFeatureLabelCountList(canvas);
+    let sum = 0;
+    if (countList) {
+      for (let i = 0; i < countList.length; i++) {
+        const count = countList[i];
+        sum += isNaN(count) ? 0 : count;
+      }
+    }
+    return sum;
+  }
+
+  getNonFeaturePixelCount({canvas, fileDesc}: {canvas: HTMLCanvasElement, fileDesc: RawFileDescriptor}) {
+    const ctx = canvas.getContext("2d");
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height-1);
+    if (!imageData || !imageData.data || imageData.width !== canvas.width || imageData.height !== canvas.height - 1) {
+      return null;
+    }
+    let count = 0;
+    for (let y = 0; y < imageData.height; y++) {
+      for (let x = 0; x < imageData.width; x++) {
+        const data = imageData.data[(y * imageData.height + x) * 4 + 3];
+        if (data <= 128 && data !== 255) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
+  getUniqueLabelListFromFiles(fileList: {canvas: HTMLCanvasElement, fileDesc: RawFileDescriptor}[]) {
+    const uniqueLabelList = new Set<string>();
+    for (let desc of fileList) {
+      if (!desc.canvas) {
+        continue;
+      }
+      const labelList = this.getAnnotationFromCanvas(desc.canvas, null, false);
+      for (let label of labelList) {
+        uniqueLabelList.add(label);
+      }
+    }
+    return uniqueLabelList;
   }
 
   getAnnotationFromCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D = null, required = true): string[] {
@@ -152,21 +201,37 @@ export class ImageService {
     return counts;
   }
 
-  getFeaturePixels(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+  /**
+   * Get the list of pixels coordinates that are features and their label ids
+   * @param canvas
+   * @param ctx
+   * @param keepChance A number between 0 and 1 to check to randomly discard features (default is 1 which discard none, 0 discards all)
+   * @param borderOffset The width and height in pixels to exclude from the borders as these might have incomplete values due to brush size
+   * @return The list of lists with [x, y, labelId] which are the integer coordinate pair and the label index
+   */
+  getFeaturePixels(
+    canvas: HTMLCanvasElement,
+    ctx: CanvasRenderingContext2D,
+    keepChance: number = 1,
+    borderOffset: number = 0
+  ): [number, number, number][] {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height-1);
-    if (!imageData || !imageData.data || imageData.width !== canvas.width || imageData.height !== canvas.height) {
+    if (!imageData || !imageData.data || imageData.width !== canvas.width || imageData.height !== canvas.height - 1) {
       return null;
     }
-    let count = 0;
-    for (let y = 0; y < imageData.height; y++) {
-      for (let x = 0; x < imageData.width; x++) {
+    let features: [number, number, number][] = [];
+    for (let y = borderOffset; y < imageData.height - borderOffset; y++) {
+      for (let x = borderOffset; x < imageData.width - borderOffset; x++) {
         const data = imageData.data[(y * imageData.height + x) * 4 + 3];
         if (data > 128 && data < 255) {
           const labelId = Math.round((255 - data) / 2) - 1;
+          if (labelId >= 0 && labelId < 64 && Math.random() < (keepChance+0.01)) {
+            features.push([x, y, labelId]);
+          }
         }
       }
     }
-    return imageData.data;
+    return features;
   }
 
   /**
@@ -182,7 +247,9 @@ export class ImageService {
     r /= 255, g /= 255, b /= 255;
 
     const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h, s, l = (max + min) / 2;
+    let h: number;
+    let s: number;
+    let l = (max + min) / 2;
 
     if (max == min) {
       h = s = 0; // achromatic

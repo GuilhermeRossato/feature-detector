@@ -57,10 +57,7 @@
 .image-view canvas {
   transform: scale(0.5);
   image-rendering: pixelated;
-}
-
-.image-view canvas:hover {
-  /* transform: scale(1); */
+  cursor: pointer;
 }
 
 .image-view .description {

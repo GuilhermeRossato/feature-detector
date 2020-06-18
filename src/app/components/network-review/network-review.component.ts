@@ -2,6 +2,8 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { BrushService } from 'src/app/services/brush.service';
 import { ImageService } from 'src/app/services/image.service';
 import { RawFileDescriptor } from '../file-dropper/file-dropper.component';
+import { NetworkConfiguration } from '../network-configurator/network-configurator.component';
+import { NeuralService } from 'src/app/services/neural.service';
 
 @Component({
   selector: 'app-network-review',
@@ -10,18 +12,7 @@ import { RawFileDescriptor } from '../file-dropper/file-dropper.component';
 })
 export class NetworkReviewComponent implements OnChanges {
 
-  @Input() config: {
-    brushSize: number,
-    brushSpacing: number,
-    brushShape: "circle" | "diamond" | "square",
-    inputFormat: "rgb" | "hsl" | "r" | "g" | "b" | "rg" | "rb" | "grayscale",
-    hiddenLayerCount: number,
-    hiddenNeuronCount: number,
-    activationFunction: string,
-    epochCount: number,
-    featureDatasetPercent: number,
-    nonFeaturePercent: number
-  };
+  @Input() config: NetworkConfiguration;
 
   @Input() fileList: {canvas: HTMLCanvasElement, fileDesc: RawFileDescriptor}[];
 
@@ -37,7 +28,8 @@ export class NetworkReviewComponent implements OnChanges {
 
   constructor(
     private brushService: BrushService,
-    private imageService: ImageService
+    private imageService: ImageService,
+    private neuralService: NeuralService
   ) { }
 
   thousandsSeparators(num: number, separator = ","): string {
@@ -57,7 +49,7 @@ export class NetworkReviewComponent implements OnChanges {
     }
     const pixels = this.brushService.getBrushPixels(this.config.brushSize, this.config.brushSpacing, this.config.brushShape);
     this.inputPixels = pixels.length;
-    this.inputs = pixels.length * this.getMultiplierFromFormat(this.config.inputFormat);
+    this.inputs = pixels.length * this.neuralService.getInputMultiplierFromFormat(this.config.inputFormat);
   }
 
   private onUpdateImages() {
@@ -68,31 +60,16 @@ export class NetworkReviewComponent implements OnChanges {
       return;
     }
     this.images = this.fileList.length;
-    const uniqueLabelList = new Set<string>();
+    const uniqueLabelList = this.imageService.getUniqueLabelListFromFiles(this.fileList);
     let featureCount = 0;
     for (let desc of this.fileList) {
-      const image = desc.canvas;
-      if (!image) {
+      if (!desc.canvas) {
         continue;
       }
-      const labelList = this.imageService.getAnnotationFromCanvas(image, null, false);
-      for (let label of labelList) {
-        uniqueLabelList.add(label);
-      }
-      if (labelList.length) {
-        const countList = this.imageService.getFeatureLabelCountList(image);
-        // console.log(featureCount, countList, countList.length);
-        if (countList) {
-          for (let i = 0; i < countList.length; i++) {
-            const count = countList[i];
-            featureCount += isNaN(count) ? 0 : count;
-          }
-        }
-      }
+      featureCount += this.imageService.getFeaturePixelCount(desc);
     }
     this.featurePixels = featureCount;
     this.outputs = uniqueLabelList.size;
-
   }
 
   private onAfterUpdatedValues() {
@@ -117,20 +94,6 @@ export class NetworkReviewComponent implements OnChanges {
       this.nonFeatureCount = null;
     }
     this.connections = connections;
-  }
-
-  private getMultiplierFromFormat(format: string): number {
-    switch (format) {
-      case 'hsl':
-      case 'grayscale':
-      case 'rgb': return 3;
-      case 'r':
-      case 'g':
-      case 'b': return 1;
-      case 'rg':
-      case 'rb': return 2;
-      default: throw new Error('Unknown format');
-    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
