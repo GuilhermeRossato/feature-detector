@@ -201,6 +201,37 @@ export class ImageService {
     return counts;
   }
 
+  getAggregatedFeatureLabelCountList(fileList: {canvas: HTMLCanvasElement, fileDesc: RawFileDescriptor}[]): Record<string, number> {
+    const uniqueLabelList = this.getUniqueLabelListFromFiles(fileList);
+    const labelRecord: Record<string, number> = {};
+    for (let {canvas} of fileList) {
+      if (!canvas) {
+        continue;
+      }
+      const ctx = canvas.getContext("2d");
+      const labelList = this.getAnnotationFromCanvas(canvas, ctx);
+      if (!labelList || labelList.length === 0) {
+        continue;
+      }
+      const countList = this.getFeatureLabelCountList(canvas, ctx);
+      for (let i = 0; i < countList.length; i++) {
+        if (countList[i] === undefined) {
+          continue;
+        }
+        if (isNaN(countList[i])) {
+          throw new Error("Feature label count unexpectedly has a not-a-number value");
+        }
+        const label = labelList[i];
+        if (typeof labelRecord[label] !== "number") {
+          labelRecord[label] = countList[i];
+        } else {
+          labelRecord[label] += countList[i];
+        }
+      }
+    }
+    return labelRecord;
+  }
+
   /**
    * Get the list of pixels coordinates that are features and their label ids
    * @param canvas

@@ -51,7 +51,7 @@ export class NeuralService {
     const outputs = uniqueLabelList.length;
     const dataset: { input: number[]; output: number[]; }[] = [];
     const expectedFeatureSize = Math.floor(featureCount * (config.featureDatasetPercent / 100));
-    // Create de feature dataset
+    // Create the feature dataset
     for (let {canvas} of fileList) {
       if (!canvas) {
         continue;
@@ -66,7 +66,7 @@ export class NeuralService {
         }
         const inputArray = new Array(inputs);
         let inputIndex = 0;
-        const output = new Array(outputs).fill(0);
+        const output = new Array(outputs+1).fill(0);
         const label = imageLabelList[labelId];
         for (let i = 0; i < uniqueLabelList.length; i++) {
           if (uniqueLabelList[i] === label) {
@@ -108,7 +108,9 @@ export class NeuralService {
           for (let {x, y} of pixels) {
             inputIndex = this.addFeatureToInputArray(fx + x, fy + y, imageData, config.inputFormat, inputArray, inputIndex);
           }
-          dataset.push({ input: inputArray, output: new Array(outputs).fill(0) });
+          const output = new Array(outputs + 1).fill(0);
+          output[outputs] = 1;
+          dataset.push({ input: inputArray, output });
           break;
         }
       }
@@ -198,7 +200,7 @@ export class NeuralService {
 
     return {
       inputSize,
-      hiddenLayers: hiddenLayers.length === 0 ? null : hiddenLayers,
+      hiddenLayers: hiddenLayers,
       outputSize,
       labelList
     };
@@ -217,20 +219,17 @@ export class NeuralService {
     const {inputSize, hiddenLayers, outputSize, labelList} = this.getNetworkParameters(fileList, config);
     const network = new this.brain.NeuralNetwork({
       activation: config.activationFunction,
-      hiddenLayers,
-      iterations: 20000,
-      logPeriod: 100,
-      errorTreshold: 0.001,
-      learningRate: 0.25
+      hiddenLayers
     });
     // I find that this is the best way to initialize the network
-    const initOutput = new Array(outputSize).fill(0);
-    initOutput[0] = 1;
+    const initOutput = new Array(outputSize+1).fill(0);
+    initOutput[outputSize] = 1;
     network.train([{
       input: new Array(inputSize).fill(0),
       output: initOutput
     }], {
-      iterations: 1,
+      learningRate: 0.25,
+      iterations: 10,
       hiddenLayers
     });
     // Injecting just because we are not dealing with a well-typescript-ed library, alright? I know it's wrong.
@@ -243,7 +242,18 @@ export class NeuralService {
     return network.train(dataset, {iterations, activation: network._fd_activation});
   }
 
-  testNetwork(network: any, dataset: { input: number[]; output: number[]; }[]) {
+  testNetwork(network: any, dataset: { input: number[]; output: number[]; }[]): {
+      error: number;
+      misclasses: number;
+      accuracy: number;
+      incorrectCount: Record<string, number>;
+      total: number;
+  } {
+    const labelList: string[] = network._fd_labelList;
+    for (let i = 0; i < dataset.length; i++) {
+      // const result = network.runInput(dataset[i].input);
+    }
+
     const testResult = network.test(dataset);
 
     const error: number = testResult.error;
@@ -252,7 +262,7 @@ export class NeuralService {
 
     const incorrectCount: Record<string, number> = {};
     for (let { actual, expected } of testResult.misclasses) {
-      const label = network._fd_labelList[expected];
+      const label = labelList[expected];
       if (typeof incorrectCount[label] !== "number") {
         incorrectCount[label] = 1;
       } else {
@@ -266,5 +276,9 @@ export class NeuralService {
       incorrectCount,
       total: testResult.total as number
     }
+  }
+
+  deepTest(network: any, dataset: { input: number[]; output: number[]; }[]) {
+    throw new Error("Method not implemented.");
   }
 }

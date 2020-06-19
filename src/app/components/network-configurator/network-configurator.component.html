@@ -211,4 +211,43 @@
       <small class="description">This value allows you to control your network ability to detect areas that are not marked as features by setting aside a percent of the dataset that won't contain a feature so that the network can learn that some pixels are uninteresting.</small>
     </div>
   </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Validation Percent</label>
+      <app-dynamic-input
+        type="number"
+        name="validation-percent"
+        min="0"
+        max="99"
+        [startValue]="validationPercent"
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
+    </div>
+    <div class="explanation">
+      <h4 class="title">The dataset slice that will be used for validation</h4>
+      <small class="description">The value of randomly-extracted percent of the dataset that will not be included in training which will be used exclusively to test the performance of the network so that you can accurately measure how capable the network is in generalizing as opposed to memorizing the inputs (overfitting). Ideal values range between 10% and 50%.</small>
+    </div>
+  </div>
+  <div class="config-group">
+    <div class="input-group">
+      <label>Distribute Features</label>
+      <app-dynamic-input
+        type="select"
+        name="distributed-features"
+        [startValue]="distributedFeatures"
+        [options]="
+          [
+            {value: 'no-redistribution', label: 'No redistribution'},
+            {value: 'distribute-features', label: 'Distribute features equally'},
+            {value: 'distribute-all', label: 'Distribute features and non-features'}
+          ]
+        "
+        (inputChange)="onInputChange($event.name, $event.value)"
+      ></app-dynamic-input>
+    </div>
+    <div class="explanation">
+      <h4 class="title">Which kind of redistribution  shall take place?</h4>
+      <small class="description">The network will always bias toward the most frequently found feature in the training set. If you have a distribution like 30% and 70% then enabling redistribution will remove 40% of the second feature, leaving 30% and 30%. In other words every feature gets limited (cut down) to the smallest distribution feature count. Select "no redistribution" to disable.</small>
+    </div>
+  </div>
 </form>

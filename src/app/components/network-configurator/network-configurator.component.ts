@@ -11,6 +11,8 @@ export interface NetworkConfiguration {
   epochCount: number;
   featureDatasetPercent: number;
   nonFeaturePercent: number;
+  validationPercent: number;
+  distributedFeatures: 'no-redistribution' | 'distribute-features' | 'distribute-all';
 };
 
 @Component({
@@ -27,13 +29,14 @@ export class NetworkConfiguratorComponent implements OnInit {
   public brushSpacing: number = 2;
   public brushShape: "square" | "circle" | "diamond" = "circle";
   public inputFormat: "rgb" | "hsl" | "r" | "g" | "b" | "rg" | "rb" | "grayscale" = "rgb";
-
   public hiddenLayerCount: number = 2;
-  public hiddenNeuronCount: number = 17;
+  public hiddenNeuronCount: number = 16;
   public activationFunction: string = 'sigmoid';
   public epochCount: number = 10000;
   public featureDatasetPercent: number = 100;
   public nonFeaturePercent: number = 50;
+  public validationPercent: number = 15;
+  public distributedFeatures: 'no-redistribution' | 'distribute-features' | 'distribute-all' = 'no-redistribution';
 
   constructor() {}
 
@@ -63,6 +66,10 @@ export class NetworkConfiguratorComponent implements OnInit {
       this.featureDatasetPercent = parseInt(value, 10);
     } else if (name === "non-feature-percent") {
       this.nonFeaturePercent = parseInt(value, 10);
+    } else if (name === "validation-percent") {
+      this.validationPercent = parseInt(value, 10);
+    } else if (name === "distributed-features") {
+      this.distributedFeatures = value as any;
     } else {
       console.warn("Unhandled input", name);
     }
@@ -77,6 +84,8 @@ export class NetworkConfiguratorComponent implements OnInit {
       epochCount: this.epochCount,
       featureDatasetPercent: this.featureDatasetPercent,
       nonFeaturePercent: this.nonFeaturePercent,
+      validationPercent: this.validationPercent,
+      distributedFeatures: this.distributedFeatures,
     });
   }
 

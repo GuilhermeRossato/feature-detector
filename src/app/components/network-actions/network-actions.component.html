@@ -24,7 +24,7 @@
       <div *ngFor="let step of steps; index as index">
         <span>{{ step.label }}</span>
         <span class="time" title="{{ step.date.toISOString() }}">{{ ' ' + getTimeString(index, step.date) }}</span>
-        <span class="memory" *ngIf="step.memory" title="Memory usage percent from available according to your browser"> (Mem usage: {{ (step.memory * 100).toFixed(2) }}%)</span>
+        <span class="memory" *ngIf="step.memory && (index === 0 || index === steps.length-1)" title="Memory usage percent from available according to your browser"> (Mem usage: {{ (step.memory * 100).toFixed(2) }}%)</span>
       </div>
     </div>
   </div>

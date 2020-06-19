@@ -4,6 +4,7 @@
   margin: 0;
   padding: 0;
   line-height: 24px;
+  font-size: 14px;
 }
 
 .question-subscript {
@@ -11,4 +12,5 @@
   font-size: 11px;
   transform: translate(6px, -6px);
   display: inline-block;
+  cursor: help;
 }

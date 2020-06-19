@@ -25,6 +25,13 @@ export class NetworkReviewComponent implements OnChanges {
   public featurePixels = null;
   public usableFeatureCount = null;
   public nonFeatureCount = null;
+  public smallestFeatureCount: number;
+  public smallestFeatureName: string;
+  public biggestFeatureCount: number;
+  public biggestFeatureName: string;
+  public featureCount: number = null;
+  public totalDatasetSize: number = null;
+  public validationDatasetSize: number = null;
 
   constructor(
     private brushService: BrushService,
@@ -62,14 +69,53 @@ export class NetworkReviewComponent implements OnChanges {
     this.images = this.fileList.length;
     const uniqueLabelList = this.imageService.getUniqueLabelListFromFiles(this.fileList);
     let featureCount = 0;
-    for (let desc of this.fileList) {
-      if (!desc.canvas) {
+    let smallestFeatureCount: number = null;
+    let smallestFeatureName: string = null;
+    let biggestFeatureCount: number = null;
+    let biggestFeatureName: string = null;
+    const featureRecord = this.imageService.getAggregatedFeatureLabelCountList(this.fileList);
+    this.featureCount = 0;
+    for (let key in featureRecord) {
+      this.featureCount++;
+      if (!uniqueLabelList.has(key) || typeof featureRecord[key] !== "number") {
+        console.warn(`Unknown feature record property ${key}`);
         continue;
       }
-      featureCount += this.imageService.getFeaturePixelCount(desc);
+      featureCount += featureRecord[key];
+      if (smallestFeatureCount === null || featureRecord[key] < smallestFeatureCount) {
+        smallestFeatureCount = featureRecord[key];
+        smallestFeatureName = key;
+      }
+      if (biggestFeatureCount === null || featureRecord[key] > biggestFeatureCount) {
+        biggestFeatureCount = featureRecord[key];
+        biggestFeatureName = key;
+      }
     }
+    this.smallestFeatureCount = smallestFeatureCount;
+    this.smallestFeatureName = smallestFeatureName;
+    this.biggestFeatureCount = biggestFeatureCount;
+    this.biggestFeatureName = biggestFeatureName;
     this.featurePixels = featureCount;
     this.outputs = uniqueLabelList.size;
+  }
+
+  get distribution() {
+    if (!this.config || (this.config && typeof this.config.distributedFeatures !== "string")) {
+      return 'no-redistribution';
+    }
+    return this.config.distributedFeatures;
+  }
+
+  getTotalDatasetSize() {
+    if (!this.config || typeof this.usableFeatureCount !== "number") {
+      return null;
+    } else if (this.distribution === "no-redistribution" || typeof this.smallestFeatureCount !== "number") {
+      return this.usableFeatureCount + this.nonFeatureCount;
+    } else if (this.distribution === "distribute-features" || this.nonFeatureCount <= this.smallestFeatureCount) {
+      return this.smallestFeatureCount * this.featureCount + this.nonFeatureCount;
+    } else if (this.distribution === "distribute-all" && this.nonFeatureCount > this.smallestFeatureCount) {
+      return this.smallestFeatureCount * (this.featureCount + 1);
+    }
   }
 
   private onAfterUpdatedValues() {
@@ -94,6 +140,8 @@ export class NetworkReviewComponent implements OnChanges {
       this.nonFeatureCount = null;
     }
     this.connections = connections;
+    this.totalDatasetSize = this.getTotalDatasetSize();
+    this.validationDatasetSize = Math.floor(this.totalDatasetSize * this.config.validationPercent / 100);
   }
 
   ngOnChanges(changes: SimpleChanges): void {
