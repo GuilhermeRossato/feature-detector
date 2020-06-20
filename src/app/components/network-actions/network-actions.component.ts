@@ -177,10 +177,9 @@ export class NetworkActionsComponent implements OnInit {
   private async step3() {
     if (!this.network || !this.neuralService.isSameNetwork(this.network, this.fileList, this.config)) {
       this.network = this.neuralService.createNetwork(this.fileList, this.config);
-      this.addStep("Created network");
-    }
-    else {
-      this.addStep("Loaded previous network");
+      this.addStep("Created network. Starting training");
+    } else {
+      this.addStep("Loaded previous network. Starting training");
     }
     await sleep(17);
     if (this.haltTraining) {

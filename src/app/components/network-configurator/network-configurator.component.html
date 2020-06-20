@@ -250,4 +250,15 @@
       <small class="description">The network will always bias toward the most frequently found feature in the training set. If you have a distribution like 30% and 70% then enabling redistribution will remove 40% of the second feature, leaving 30% and 30%. In other words every feature gets limited (cut down) to the smallest distribution feature count. Select "no redistribution" to disable.</small>
     </div>
   </div>
+  <div class="config-group full-width" *ngIf="outputList">
+    <div class="input-group">
+      <label>Annotations to include as network output</label>
+      <div class="output-list-wrapper">
+        <div class="output-unit" *ngFor="let output of outputList; index as index">
+          <input type="checkbox" [name]="output.label" [checked]="output.include" (click)="onAnnotationIncludeClick($event.target, index)" />
+          <label (click)="$event.target.parentNode.querySelector('input').click()">{{ output.label }}</label>
+        </div>
+      </div>
+    </div>
+  </div>
 </form>

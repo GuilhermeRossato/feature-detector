@@ -61,9 +61,9 @@ export class NetworkReviewComponent implements OnChanges {
 
   private onUpdateImages() {
     if (!this.fileList) {
-      this.outputs = null;
       this.images = 0;
       this.featurePixels = 0;
+      this.outputs = null;
       return;
     }
     this.images = this.fileList.length;
@@ -120,13 +120,13 @@ export class NetworkReviewComponent implements OnChanges {
 
   private onAfterUpdatedValues() {
     this.trainingTime = 1;
-    let connections = 0;
-    if (this.config && this.config.hiddenLayerCount) {
+    let connections = null;
+    if (this.config && this.config.hiddenLayerCount && typeof this.inputs === "number") {
       connections = this.inputs * this.config.hiddenNeuronCount;
       connections += this.config.hiddenNeuronCount * this.config.hiddenNeuronCount * (this.config.hiddenLayerCount - 1);
       connections += this.outputs * this.config.hiddenNeuronCount;
       connections += this.config.hiddenLayerCount; // Biases
-    } else {
+    } else if (typeof this.inputs === "number" && typeof this.outputs === "number") {
       connections = this.inputs * this.outputs;
     }
     if (this.config && typeof this.featurePixels === "number" && typeof this.config.featureDatasetPercent === "number" && !isNaN(this.config.featureDatasetPercent)) {
@@ -141,7 +141,9 @@ export class NetworkReviewComponent implements OnChanges {
     }
     this.connections = connections;
     this.totalDatasetSize = this.getTotalDatasetSize();
-    this.validationDatasetSize = Math.floor(this.totalDatasetSize * this.config.validationPercent / 100);
+    if (this.config && typeof this.config.validationPercent === "number") {
+      this.validationDatasetSize = Math.floor(this.totalDatasetSize * this.config.validationPercent / 100);
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {

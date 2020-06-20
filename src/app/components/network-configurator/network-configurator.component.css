@@ -15,7 +15,12 @@
   margin: 5px 4px 5px 4px;
 }
 
-.config-group .input-group label {
+.config-group.full-width {
+  width: 100%;
+  flex-basis: 100%;
+}
+
+.config-group .input-group > label {
   display: block;
   margin-top: 10px;
   font-size: 1.05rem;
@@ -37,4 +42,30 @@
 .brush-preview-wrapper {
   width: 100%;
   flex-basis: 100%;
+}
+
+.output-list-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 5px;
+}
+
+.output-list-wrapper .output-unit {
+  border: 1px dashed #bbb;
+  padding: 3px 5px 3px 3px;
+  margin: 2px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.output-list-wrapper .output-unit input {
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+}
+
+.output-list-wrapper .output-unit label {
+  cursor: pointer;
+  margin: 0 0 0 3px;
 }
