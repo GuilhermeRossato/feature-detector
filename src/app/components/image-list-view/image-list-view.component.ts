@@ -152,7 +152,7 @@ export class ImageListViewComponent implements OnChanges {
       image.description = "No label data";
       return;
     }
-    const labelList = this.appendedImage.getAnnotationFromCanvas(image.canvas, image.ctx);;
+    const labelList = this.appendedImage.getLabelListFromCanvas(image.canvas, image.ctx);;
     if (!(labelList instanceof Array) || labelList.length < 1) {
       image.labelList = [];
       image.description = "Empty label array";

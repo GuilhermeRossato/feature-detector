@@ -76,7 +76,7 @@ export class BrushVisualizationComponent implements OnInit, AfterViewInit, OnCha
       this.drawInputBrushAt(right, rightCtx, size, format, spacing, pixels, input.canvas, point);
       let label;
       try {
-        label = this.imageService.getAnnotationAt(input.canvas, input.canvas.getContext("2d"), point);
+        label = this.imageService.getLabelAt(input.canvas, input.canvas.getContext("2d"), point);
       } catch (err) {
         // Continue regardless of error
       }

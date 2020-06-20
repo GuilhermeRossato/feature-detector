@@ -59,7 +59,7 @@ export class NeuralService {
       const ctx = canvas.getContext("2d");
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height-1);
       const features = this.imageService.getFeaturePixels(canvas, ctx, config.featureDatasetPercent / 100, includeBorders ? config.brushSize : 0);
-      const imageLabelList = this.imageService.getAnnotationFromCanvas(canvas, ctx, true);
+      const imageLabelList = this.imageService.getLabelListFromCanvas(canvas, ctx, true);
       for (let [fx, fy, labelId] of features) {
         if (dataset.length >= expectedFeatureSize) {
           break;

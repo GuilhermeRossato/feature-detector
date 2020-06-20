@@ -66,7 +66,7 @@ export class ImageService {
   }
 
   getFeaturePixelCount({canvas, fileDesc}: {canvas: HTMLCanvasElement, fileDesc: RawFileDescriptor}) {
-    const labelList = this.getAnnotationFromCanvas(canvas, null, false);
+    const labelList = this.getLabelListFromCanvas(canvas, null, false);
     if (!labelList.length) {
        return 0;
     }
@@ -105,7 +105,7 @@ export class ImageService {
       if (!desc.canvas) {
         continue;
       }
-      const labelList = this.getAnnotationFromCanvas(desc.canvas, null, false);
+      const labelList = this.getLabelListFromCanvas(desc.canvas, null, false);
       for (let label of labelList) {
         uniqueLabelList.add(label);
       }
@@ -113,7 +113,7 @@ export class ImageService {
     return uniqueLabelList;
   }
 
-  getAnnotationFromCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D = null, required = true): string[] {
+  getLabelListFromCanvas(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D = null, required = true): string[] {
     if (canvas.hasAttribute("data-label-list")) {
       return JSON.parse(canvas.getAttribute("data-label-list"));
     }
@@ -158,12 +158,12 @@ export class ImageService {
   }
 
 
-  getAnnotationAt(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, point: {x: number, y:number}) {
+  getLabelAt(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, point: {x: number, y:number}) {
     let list: string[];
     if (canvas.hasAttribute("data-label-list")) {
       list = JSON.parse(canvas.getAttribute("data-label-list"));
     } else {
-      list = this.getAnnotationFromCanvas(canvas, ctx);
+      list = this.getLabelListFromCanvas(canvas, ctx);
     }
     const data = ctx.getImageData(point.x | 0, point.y | 0, 1, 1).data;
     if (data[3] < 128 || data[3] >= 255) {
@@ -209,7 +209,7 @@ export class ImageService {
         continue;
       }
       const ctx = canvas.getContext("2d");
-      const labelList = this.getAnnotationFromCanvas(canvas, ctx);
+      const labelList = this.getLabelListFromCanvas(canvas, ctx);
       if (!labelList || labelList.length === 0) {
         continue;
       }
