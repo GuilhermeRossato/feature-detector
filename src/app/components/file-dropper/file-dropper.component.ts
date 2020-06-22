@@ -38,9 +38,9 @@ export class FileDropperComponent implements OnInit {
             }
             return resolve({
               name: file.name,
-              url: url,
+              url,
               size: file.size,
-              time: time
+              time
             });
           }
 

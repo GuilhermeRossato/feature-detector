@@ -4,6 +4,19 @@ import { BrushService } from './brush.service';
 import { NetworkConfiguration } from '../components/network-configurator/network-configurator.component';
 import { ImageService } from './image.service';
 
+function getHighestValueId(values: number[]) {
+  if (!values) {
+    return null;
+  }
+  let highestId = 0;
+  for (let i = 1; i < values.length; i++) {
+    if (values[i] > values[highestId]) {
+      highestId = i;
+    }
+  }
+  return highestId;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -22,9 +35,10 @@ export class NeuralService {
   }
 
   createDataset(
-    fileList: {canvas: HTMLCanvasElement, fileDesc: RawFileDescriptor}[],
+    fileList: {canvas: HTMLCanvasElement; fileDesc: RawFileDescriptor}[],
     config: NetworkConfiguration,
-    includeBorders: boolean
+    includeBorders: boolean,
+    outputList: {label: string; include?: boolean}[]
   ) {
     if (typeof config.inputFormat !== "string") {
       throw new Error(`Invalid input format: ${config.inputFormat}`);
@@ -39,7 +53,7 @@ export class NeuralService {
     }
     fileList = fileList.filter(file => !!file.canvas);
     const pixels = this.brushService.getBrushPixels(config.brushSize, config.brushSpacing, config.brushShape);
-    const uniqueLabelList = [...this.imageService.getUniqueLabelListFromFiles(fileList)];
+    const uniqueLabelList = outputList.map(output => output.label);
     let featureCount = 0;
     for (let desc of fileList) {
       if (!desc.canvas) {
@@ -48,7 +62,7 @@ export class NeuralService {
       featureCount += this.imageService.getFeaturePixelCount(desc);
     }
     const inputs = pixels.length * this.getInputMultiplierFromFormat(config.inputFormat);
-    const outputs = uniqueLabelList.length;
+    const outputs = outputList.length;
     const dataset: { input: number[]; output: number[]; }[] = [];
     const expectedFeatureSize = Math.floor(featureCount * (config.featureDatasetPercent / 100));
     // Create the feature dataset
@@ -64,10 +78,14 @@ export class NeuralService {
         if (dataset.length >= expectedFeatureSize) {
           break;
         }
+        const label = imageLabelList[labelId];
+        if (!uniqueLabelList.includes(label)) {
+          // Skip unselected labels
+          continue;
+        }
         const inputArray = new Array(inputs);
         let inputIndex = 0;
         const output = new Array(outputs+1).fill(0);
-        const label = imageLabelList[labelId];
         for (let i = 0; i < uniqueLabelList.length; i++) {
           if (uniqueLabelList[i] === label) {
             output[i] = 1;
@@ -278,7 +296,30 @@ export class NeuralService {
     }
   }
 
-  deepTest(network: any, dataset: { input: number[]; output: number[]; }[]) {
-    throw new Error("Method not implemented.");
+  avaliateGuesses(network: any, dataset: { input: number[]; output: number[]; }[]) {
+    const accumulated = {
+      correct: 0,
+      incorrect: 0
+    };
+    const guesses = {
+      correct: [],
+      incorrect: []
+    };
+    for (let unit of dataset) {
+      const result = network.runInput(unit.input);
+      const outputId = getHighestValueId(result);
+      const expectedId = getHighestValueId(unit.output);
+      if (outputId === expectedId) {
+        guesses.correct[outputId] = (typeof guesses.correct[outputId] === "number" ? guesses.correct[outputId] : 0) + 1;
+        accumulated.correct++;
+      } else {
+        guesses.incorrect[outputId] = (typeof guesses.incorrect[outputId] === "number" ? guesses.incorrect[outputId] : 0) + 1;
+        accumulated.incorrect++;
+      }
+    }
+    return {
+      accumulated,
+      guesses
+    };
   }
 }

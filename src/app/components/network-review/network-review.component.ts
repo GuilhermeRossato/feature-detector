@@ -48,7 +48,7 @@ export class NetworkReviewComponent implements OnChanges {
     return numParts.join('.');
   };
 
-  private onUpdateNetworkConfig() {
+  private digestNetworkConfig() {
     if (!this.config) {
       this.inputPixels = null;
       this.inputs = null;
@@ -57,9 +57,10 @@ export class NetworkReviewComponent implements OnChanges {
     const pixels = this.brushService.getBrushPixels(this.config.brushSize, this.config.brushSpacing, this.config.brushShape);
     this.inputPixels = pixels.length;
     this.inputs = pixels.length * this.neuralService.getInputMultiplierFromFormat(this.config.inputFormat);
+    this.outputs = this.getUniqueLabelList().size;
   }
 
-  private onUpdateImages() {
+  private digestImageList() {
     if (!this.fileList) {
       this.images = 0;
       this.featurePixels = 0;
@@ -67,21 +68,25 @@ export class NetworkReviewComponent implements OnChanges {
       return;
     }
     this.images = this.fileList.length;
-    const uniqueLabelList = this.imageService.getUniqueLabelListFromFiles(this.fileList);
-    let featureCount = 0;
+    const uniqueLabelList = this.getUniqueLabelList();
+    let featurePixels = 0;
     let smallestFeatureCount: number = null;
     let smallestFeatureName: string = null;
     let biggestFeatureCount: number = null;
     let biggestFeatureName: string = null;
     const featureRecord = this.imageService.getAggregatedFeatureLabelCountList(this.fileList);
+
     this.featureCount = 0;
     for (let key in featureRecord) {
-      this.featureCount++;
-      if (!uniqueLabelList.has(key) || typeof featureRecord[key] !== "number") {
-        console.warn(`Unknown feature record property ${key}`);
+      if (!uniqueLabelList.has(key)) {
         continue;
       }
-      featureCount += featureRecord[key];
+      this.featureCount++;
+      if (typeof featureRecord[key] !== "number") {
+        console.warn(`Unknown feature record property ${key} of type ${typeof featureRecord[key]}`);
+        continue;
+      }
+      featurePixels += featureRecord[key];
       if (smallestFeatureCount === null || featureRecord[key] < smallestFeatureCount) {
         smallestFeatureCount = featureRecord[key];
         smallestFeatureName = key;
@@ -95,8 +100,15 @@ export class NetworkReviewComponent implements OnChanges {
     this.smallestFeatureName = smallestFeatureName;
     this.biggestFeatureCount = biggestFeatureCount;
     this.biggestFeatureName = biggestFeatureName;
-    this.featurePixels = featureCount;
+    this.featurePixels = featurePixels;
     this.outputs = uniqueLabelList.size;
+  }
+
+  private getUniqueLabelList() {
+    if (this.config && this.config.outputList instanceof Array) {
+      return new Set<string>(this.config.outputList.filter(output => output.include).map(output => output.label));
+    }
+    return this.imageService.getUniqueLabelListFromFiles(this.fileList);
   }
 
   get distribution() {
@@ -147,11 +159,9 @@ export class NetworkReviewComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.config) {
-      this.onUpdateNetworkConfig();
-    }
-    if (changes.fileList) {
-      this.onUpdateImages();
+    if (changes.config || changes.fileList) {
+      this.digestNetworkConfig();
+      this.digestImageList();
     }
     this.onAfterUpdatedValues();
   }

@@ -53,7 +53,6 @@ export class NetworkConfiguratorComponent implements OnInit, OnChanges {
   ) {}
 
   ngOnInit() {
-    this.outputList = [{label: "door", include: true}];
     if (!this.hasSentFirstConfigChange) {
       this.emitConfigChangeDebounced();
     }
@@ -130,7 +129,7 @@ export class NetworkConfiguratorComponent implements OnInit, OnChanges {
     if (input.checked) {
       this.localStorage.clearItem(key);
     } else {
-      this.localStorage.setItem(key, "0");
+      this.localStorage.setItem(key, "0", null);
     }
     this.outputList[index].include = input.checked;
     this.emitConfigChangeDebounced();
