@@ -90,7 +90,7 @@ export class ImageService {
     let count = 0;
     for (let y = 0; y < imageData.height; y++) {
       for (let x = 0; x < imageData.width; x++) {
-        const data = imageData.data[(y * imageData.height + x) * 4 + 3];
+        const data = imageData.data[(y * imageData.width + x) * 4 + 3];
         if (data <= 128 && data !== 255) {
           count++;
         }
@@ -187,7 +187,7 @@ export class ImageService {
     let counts = [];
     for (let y = 0; y < imageData.height; y++) {
       for (let x = 0; x < imageData.width; x++) {
-        const data = imageData.data[(y * imageData.height + x) * 4 + 3];
+        const data = imageData.data[(y * imageData.width + x) * 4 + 3];
         if (data > 128 && data < 255) {
           const labelId = Math.round((255 - data) / 2) - 1;
           if (typeof counts[labelId] !== "number") {
@@ -253,7 +253,7 @@ export class ImageService {
     let features: [number, number, number][] = [];
     for (let y = borderOffset; y < imageData.height - borderOffset; y++) {
       for (let x = borderOffset; x < imageData.width - borderOffset; x++) {
-        const data = imageData.data[(y * imageData.height + x) * 4 + 3];
+        const data = imageData.data[(y * imageData.width + x) * 4 + 3];
         if (data > 128 && data < 255) {
           const labelId = Math.round((255 - data) / 2) - 1;
           if (labelId >= 0 && labelId < 64 && Math.random() < (keepChance+0.01)) {
