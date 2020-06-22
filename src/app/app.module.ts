@@ -9,6 +9,7 @@ import { NetworkReviewComponent } from './components/network-review/network-revi
 import { NetworkActionsComponent } from './components/network-actions/network-actions.component';
 import { BrushVisualizationComponent } from './components/brush-visualization/brush-visualization.component';
 import { DynamicInputComponent } from './components/dynamic-input/dynamic-input.component';
+import { ModalModule } from './services/modal';
 
 @NgModule({
   declarations: [
@@ -19,10 +20,11 @@ import { DynamicInputComponent } from './components/dynamic-input/dynamic-input.
     NetworkReviewComponent,
     NetworkActionsComponent,
     BrushVisualizationComponent,
-    DynamicInputComponent
+    DynamicInputComponent,
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    ModalModule
   ],
   providers: [],
   bootstrap: [AppComponent]

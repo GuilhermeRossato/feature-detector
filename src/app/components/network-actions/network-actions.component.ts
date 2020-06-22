@@ -4,6 +4,7 @@ import { RawFileDescriptor } from '../file-dropper/file-dropper.component';
 import { NetworkConfiguration } from '../network-configurator/network-configurator.component';
 import { sleep } from 'src/app/utils/sleep';
 import { shuffle } from 'src/app/utils/shuffle';
+import { ModalService } from 'src/app/services/modal';
 
 @Component({
   selector: 'app-network-actions',
@@ -25,11 +26,22 @@ export class NetworkActionsComponent implements OnInit {
     test: { input: number[]; output: number[]; }[]
   } = null;
   public training: boolean;
+  public hasTrained = false;
+  public outputRecord: Record<number, string> = {0: "chicken", 1: "door", 2: "gate"};
   private haltTraining: boolean;
 
   constructor(
-    private neuralService: NeuralService
+    private neuralService: NeuralService,
+    private modalService: ModalService
   ) { }
+
+  get outputRecordAsString() {
+    let txt = "";
+    for (let key in this.outputRecord) {
+      txt += `${(txt !== "")?", ":""}${key}: ${this.outputRecord[key]}`;
+    }
+    return txt;
+  }
 
   ngOnInit(): void {
   }
@@ -95,71 +107,66 @@ export class NetworkActionsComponent implements OnInit {
     }
   }
 
+  private redistributeTrainDataset(trainDataset: {input: number[], output: number[]}[]) {
+    const startSize = trainDataset.length;
+    // Build label record
+    const labelRecord: Record<string, number> = {};
+    for (let { output } of trainDataset) {
+      const key = output.join("");
+      if (typeof labelRecord[key] !== "number") {
+        labelRecord[key] = 1;
+      } else {
+        labelRecord[key]++;
+      }
+    }
+    // Find smallest label record
+    let emptyRecordKey = null;
+    let smallestRecordKey = null;
+    let smallestRecordValue = null;
+    for (let key in labelRecord) {
+      if (key[key.length-1] === "1") {
+        // Mark "empty" key for later
+        emptyRecordKey = key;
+        // Skip "empty" as we don't want to limit the dataset by empty amount
+        continue;
+      }
+      if (smallestRecordKey === null || labelRecord[key] < smallestRecordValue) {
+        smallestRecordValue = labelRecord[key];
+        smallestRecordKey = key;
+      }
+    }
+    const labelLimitRecord: Record<string, number> = {};
+    const result = trainDataset.filter((data) => {
+      const key = data.output.join("");
+      if (typeof labelLimitRecord[key] !== "number") {
+        labelLimitRecord[key] = 1;
+        return true;
+      } else if (labelLimitRecord[key] >= smallestRecordValue && (key !== emptyRecordKey || this.config.distributedFeatures === "distribute-all")) {
+        return false;
+      } else {
+        labelLimitRecord[key]++;
+        return true;
+      }
+    });
+    this.addStep(`Redistribution removed ${(startSize - trainDataset.length)} dataset entries`);
+    return result;
+  }
+
   /**
    * Step 2 - Creates the dataset parts (train and test)
    */
   private async step2() {
-    const dataset = shuffle(this.neuralService.createDataset(this.fileList, this.config, this.includeBorderOnDataset));
+    const dataset = shuffle(this.neuralService.createDataset(this.fileList, this.config, this.includeBorderOnDataset, this.config.outputList));
     const trainDatasetSize = Math.floor(typeof this.config.validationPercent === "number" ? (1 - this.config.validationPercent / 100) * dataset.length : dataset.length);
 
+    // @ts-ignore
+    window.dataset = dataset;
+
     this.addStep("Generated dataset");
+
     let trainDataset = dataset.slice(0, trainDatasetSize);
     if (this.config.distributedFeatures !== "no-redistribution") {
-      const startSize = trainDataset.length;
-      // Build label record
-      const labelRecord: Record<string, number> = {};
-      for (let { output } of trainDataset) {
-        const key = output.join("");
-        if (typeof labelRecord[key] !== "number") {
-          labelRecord[key] = 1;
-        } else {
-          labelRecord[key]++;
-        }
-      }
-      // Find smallest label record
-      let emptyRecordKey = null;
-      let smallestRecordKey = null;
-      let smallestRecordValue = null;
-      for (let key in labelRecord) {
-        if (key[key.length-1] === "1") {
-          // Mark "empty" key for later
-          emptyRecordKey = key;
-          // Skip "empty" as we don't want to limit the dataset by empty amount
-          continue;
-        }
-        if (smallestRecordKey === null || labelRecord[key] < smallestRecordValue) {
-          smallestRecordValue = labelRecord[key];
-          smallestRecordKey = key;
-        }
-      }
-      const labelLimitRecord: Record<string, number> = {};
-      trainDataset = trainDataset.filter((data) => {
-        const key = data.output.join("");
-        if (typeof labelLimitRecord[key] !== "number") {
-          labelLimitRecord[key] = 1;
-          return true;
-        } else if (labelLimitRecord[key] >= smallestRecordValue && (key !== emptyRecordKey || this.config.distributedFeatures === "distribute-all")) {
-          return false;
-        } else {
-          labelLimitRecord[key]++;
-          return true;
-        }
-      });
-      this.addStep(`Redistribution removed ${(startSize - trainDataset.length)} dataset entries`);
-
-      // Validation
-      {
-        const labelRecord: Record<string, number> = {};
-        for (let { output } of trainDataset) {
-          const key = output.join("");
-          if (typeof labelRecord[key] !== "number") {
-            labelRecord[key] = 1;
-          } else {
-            labelRecord[key]++;
-          }
-        }
-        console.log(labelRecord);
-      }
+      trainDataset = this.redistributeTrainDataset(trainDataset);
     }
     this.dataset = {
       train: trainDataset,
@@ -235,13 +242,19 @@ export class NetworkActionsComponent implements OnInit {
 
   private async step5() {
     const dataset = this.dataset.test.length === 0 ? this.dataset.train : this.dataset.test;
-    const result = this.neuralService.deepTest(this.network, dataset);
+    const result = this.neuralService.avaliateGuesses(this.network, dataset);
     await sleep(17);
     if (this.haltTraining) {
       throw new Error("Training halted by user");
     }
-    this.addStep("Tested network");
-    console.log(result);
+    if (this.dataset.test.length === 0) {
+      this.addStep("Tested network with training data, guessed results:");
+    } else {
+      this.addStep("Tested network with test data, guessed results:");
+    }
+    this.addStep(`Correct: ${result.accumulated.correct}, Incorrect: ${result.accumulated.incorrect}`);
+    await sleep(17);
+    this.addStep("Finished");
   }
 
   async onStartTrainingClick() {
@@ -256,6 +269,7 @@ export class NetworkActionsComponent implements OnInit {
       await this.step2();
       await this.step3();
       await this.step4();
+      this.hasTrained = true;
       await this.step5();
       // @ts-ignore
       window.network = this.network;
@@ -268,10 +282,20 @@ export class NetworkActionsComponent implements OnInit {
     this.training = false;
   }
 
+  onTrainOnImageClick(fileInput: HTMLInputElement) {
+    console.log(fileInput);
+    if (!fileInput || !fileInput.hasAttribute || !fileInput.hasAttribute("type") || fileInput.getAttribute("type") !== "file") {
+      console.warn("Could not find file input");
+      return;
+    }
+    fileInput.click();
+  }
+
   onResetNetworkClick() {
     if (this.training) {
       return;
     }
+    this.hasTrained = false;
     this.network = null;
     this.steps = [];
   }
@@ -279,6 +303,10 @@ export class NetworkActionsComponent implements OnInit {
   onStopTrainingClick() {
     this.haltTraining = true;
     this.addStep("Started training halt (might take a minute)");
+  }
+
+  onExportNetworkClick() {
+    this.modalService.open("exportModal");
   }
 
 }

@@ -29,4 +29,10 @@
     </div>
   </div>
   <div class="action-group error-group" *ngIf="error">{{ error.message }}</div>
+  <div class="action-group" *ngIf="(network && hasTrained)" >
+    <button type="button" role="button" (click)="onExportNetworkClick()" [disabled]="training">Export Network</button>
+  </div>
 </div>
+
+<app-modal id="exportModal">
+</app-modal>
