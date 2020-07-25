@@ -432,7 +432,8 @@ export class NetworkActionsComponent implements OnInit {
       this.error = err;
     }
     const seconds = (new Date().getTime() - trainingStart.getTime()) / 1000;
-    console.log(Object.assign({}, this.config, {trainingSeconds: seconds}));
+    const entry = Object.assign({}, this.config, {trainingSeconds: seconds});
+    window.localStorage.setItem("training-entries", ((window.localStorage.getItem("training-entries") || "") + "," + JSON.stringify(entry)));
     this.training = false;
   }
 

@@ -34,10 +34,10 @@ export class NetworkConfiguratorComponent implements OnInit, OnChanges {
   public brushSpacing: number = 2;
   public brushShape: "square" | "circle" | "diamond" = "circle";
   public inputFormat: "rgb" | "hsl" | "r" | "g" | "b" | "rg" | "rb" | "grayscale" = "rgb";
-  public hiddenLayerCount: number = 2;
+  public hiddenLayerCount: number = 0;
   public hiddenNeuronCount: number = 16;
   public activationFunction: string = 'sigmoid';
-  public epochCount: number = 10000;
+  public epochCount: number = 1000;
   public featureDatasetPercent: number = 100;
   public nonFeaturePercent: number = 50;
   public validationPercent: number = 15;
