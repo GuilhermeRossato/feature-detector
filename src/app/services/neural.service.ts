@@ -74,6 +74,7 @@ export class NeuralService {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height-1);
       const features = this.imageService.getFeaturePixels(canvas, ctx, config.featureDatasetPercent / 100, includeBorders ? config.brushSize : 0);
       const imageLabelList = this.imageService.getLabelListFromCanvas(canvas, ctx, true);
+
       for (let [fx, fy, labelId] of features) {
         if (dataset.length >= expectedFeatureSize) {
           break;
@@ -106,6 +107,7 @@ export class NeuralService {
     const nonFeatureCount = Math.floor(featureCount * (config.nonFeaturePercent / 100));
     const expectedSize = dataset.length + nonFeatureCount;
 
+    const output = new Array(outputs + 1).fill(0);
     for (let {canvas} of fileList) {
       const ctx = canvas.getContext("2d");
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height-1);
@@ -126,8 +128,6 @@ export class NeuralService {
           for (let {x, y} of pixels) {
             inputIndex = this.addFeatureToInputArray(fx + x, fy + y, imageData, config.inputFormat, inputArray, inputIndex);
           }
-          const output = new Array(outputs + 1).fill(0);
-          output[outputs] = 1;
           dataset.push({ input: inputArray, output });
           break;
         }
@@ -135,6 +135,22 @@ export class NeuralService {
       if (dataset.length > expectedSize) {
         break;
       }
+    }
+    // Remove unselected outputs from dataset
+    const expectedOutput = config.outputList;
+    for (let i = 0; i < dataset.length; i++) {
+      const output = [];
+      let has_one = 0;
+      for (let j = 0; j < expectedOutput.length; j++) {
+        if (expectedOutput[j].include) {
+          if (dataset[i].output[j] >= 0.5) {
+            has_one = 1;
+          }
+          output.push(dataset[i].output[j]);
+        }
+      }
+      output.push(has_one ? 0 : 1);
+      dataset[i].output = output;
     }
     return dataset;
   }
@@ -200,20 +216,19 @@ export class NeuralService {
       throw new Error("Missing brush size, spacing or shape");
     }
     const pixels = this.brushService.getBrushPixels(config.brushSize, config.brushSpacing, config.brushShape);
-    let hiddenLayers = [];
-    if (typeof config.hiddenLayerCount === "number") {
-      if (!config.hiddenNeuronCount) {
-        throw new Error(`Invalid hidden neuron count: ${config.hiddenNeuronCount}`);
-      }
-      for (let i = 0; i < config.hiddenLayerCount; i++) {
-        hiddenLayers.push(config.hiddenNeuronCount);
-      }
+    let hiddenLayers: number[] = [];
+    if (typeof config.hiddenLayerCount !== "number") {
+      throw new Error(`Invalid hidden neuron count: ${config.hiddenNeuronCount}`);
+    }
+    for (let i = 0; i < config.hiddenLayerCount; i++) {
+      hiddenLayers.push(config.hiddenNeuronCount);
     }
     if (!config.inputFormat) {
       throw new Error(`Unexpected input format: ${config.inputFormat}`);
     }
     const inputSize = pixels.length * this.getInputMultiplierFromFormat(config.inputFormat);
-    const labelList = [...this.imageService.getUniqueLabelListFromFiles(fileList)];
+    // const fullLabelList = [...this.imageService.getUniqueLabelListFromFiles(fileList)];
+    const labelList = config.outputList.filter(output => output.include).map(output => output.label);
     const outputSize = labelList.length;
 
     return {
@@ -225,9 +240,26 @@ export class NeuralService {
   }
 
   isSameNetwork(network: any, fileList: { canvas: HTMLCanvasElement; fileDesc: RawFileDescriptor; }[], config: NetworkConfiguration) {
-    const params = this.getNetworkParameters(fileList, config);
-    console.log(network);
-    return false;
+    const {inputSize, hiddenLayers, outputSize, labelList} = this.getNetworkParameters(fileList, config);
+
+    if (network._fd_labelList.length !== labelList.length) {
+      console.log("LabelList is different");
+      return false;
+    } else if (network._fd_activation !== config.activationFunction) {
+      console.log("Activation function is different");
+      return false;
+    } else if (network._fd_inputSize !== inputSize) {
+      console.log("InputSize function is different");
+      return false;
+    } else if (network._fd_outputSize !== outputSize) {
+      console.log("OutputSize function is different");
+      return false;
+    } else if (network._fd_hiddenLayers !== hiddenLayers.join(",")) {
+      console.log("HiddenLayers function is different");
+      return false;
+    }
+
+    return true;
   }
 
   createNetwork(
@@ -244,6 +276,8 @@ export class NeuralService {
       output: initOutput
     }];
 
+    // console.log({inputSize, hiddenLayers, outputSize, labelList, initOutput});
+
     let network: any;
     try {
       network = new this.brain.NeuralNetworkGPU({
@@ -259,12 +293,15 @@ export class NeuralService {
         activation: config.activationFunction,
         hiddenLayers,
       });
-      network.train(dataset, { learningRate: 0.25, iterations: 10, activation: config.activationFunction });
+      network.train(dataset, { learningRate: 0.25, iterations: 10 });
       network.test(dataset);
     }
-    // Injecting just because we are not dealing with a well-typescript-ed library, alright? I know it's wrong.
+    // Injecting just because we are not dealing with a well-typescript-ed library, I know it's wrong.
     network._fd_labelList = labelList;
     network._fd_activation = config.activationFunction;
+    network._fd_inputSize = inputSize;
+    network._fd_outputSize = outputSize;
+    network._fd_hiddenLayers = hiddenLayers.join(",");
     return network;
   }
 
@@ -281,8 +318,11 @@ export class NeuralService {
   } {
     const labelList: string[] = network._fd_labelList;
     for (let i = 0; i < dataset.length; i++) {
-      // const result = network.runInput(dataset[i].input);
+      const result = network.runInput(dataset[i].input);
+
     }
+    return {error: 0, misclasses: 0, accuracy: 0, incorrectCount: null, total: 0};
+    /*
 
     const testResult = network.test(dataset);
 
@@ -306,6 +346,7 @@ export class NeuralService {
       incorrectCount,
       total: testResult.total as number
     }
+    */
   }
 
   avaliateGuesses(network: any, dataset: { input: number[]; output: number[]; }[]) {
