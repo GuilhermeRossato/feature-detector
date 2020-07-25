@@ -235,21 +235,33 @@ export class NeuralService {
     config: NetworkConfiguration
   ) {
     const {inputSize, hiddenLayers, outputSize, labelList} = this.getNetworkParameters(fileList, config);
-    const network = new this.brain.NeuralNetwork({
-      activation: config.activationFunction,
-      hiddenLayers
-    });
-    // I find that this is the best way to initialize the network
+
+    // Create an example dataset to start the network
     const initOutput = new Array(outputSize+1).fill(0);
     initOutput[outputSize] = 1;
-    network.train([{
+    const dataset = [{
       input: new Array(inputSize).fill(0),
       output: initOutput
-    }], {
-      learningRate: 0.25,
-      iterations: 10,
-      hiddenLayers
-    });
+    }];
+
+    let network: any;
+    try {
+      network = new this.brain.NeuralNetworkGPU({
+        activation: config.activationFunction,
+        hiddenLayers
+      });
+      network.train(dataset, { learningRate: 0.25, iterations: 10 });
+      network.test(dataset);
+    } catch (err) {
+      console.warn("GPU Failure: " + err);
+      console.log("GPU Neural Network creation failed, falling back to CPU Neural Network");
+      network = new this.brain.NeuralNetwork({
+        activation: config.activationFunction,
+        hiddenLayers,
+      });
+      network.train(dataset, { learningRate: 0.25, iterations: 10, activation: config.activationFunction });
+      network.test(dataset);
+    }
     // Injecting just because we are not dealing with a well-typescript-ed library, alright? I know it's wrong.
     network._fd_labelList = labelList;
     network._fd_activation = config.activationFunction;

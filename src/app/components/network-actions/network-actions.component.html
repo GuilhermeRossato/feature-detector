@@ -15,16 +15,28 @@
         [startValue]="includeBorderOnDataset"
         (inputChange)="onIncludeBorderChange($event)"
       ></app-dynamic-input>
-      <label title="Include areas in which the brush cannot view all its inputs due to image borders in the training dataset" style="cursor: pointer" (click)="$event.target.parentNode.querySelector('input').click()">Include image borders on dataset</label>
+      <label title="Include areas in which the brush cannot view all its inputs due to image borders in the training dataset. Uses zeros as pixel values if they are outside the image bounds." style="cursor: pointer" (click)="$event.target.parentNode.querySelector('input').click()">Include image borders on dataset</label>
     </div>
     <button type="button" role="button" (click)="onStartTrainingClick()" *ngIf="!training">Start Training</button>
     <button type="button" role="button" (click)="onStopTrainingClick()" *ngIf="training">Stop Training</button>
     <button type="button" role="button" (click)="onResetNetworkClick()" *ngIf="network" [disabled]="training">Reset Network</button>
     <div class="progress-list">
       <div *ngFor="let step of steps; index as index">
-        <span>{{ step.label }}</span>
-        <span class="time" title="{{ step.date.toISOString() }}">{{ ' ' + getTimeString(index, step.date) }}</span>
-        <span class="memory" *ngIf="step.memory && (index === 0 || index === steps.length-1)" title="Memory usage percent from available according to your browser"> (Mem usage: {{ (step.memory * 100).toFixed(2) }}%)</span>
+        <div *ngIf="step.type === 'text'">
+          <span>{{ step.label }}</span>
+          <span class="time" title="{{ step.date && step.date.toISOString() }}">{{ ' ' + getTimeString(index) }}</span>
+          <span class="memory" *ngIf="step.memory && (index === 0 || index === steps.length-1)" title="Memory usage percent from available according to your browser"> (Mem usage: {{ (step.memory * 100).toFixed(2) }}%)</span>
+        </div>
+        <div *ngIf="step.type === 'progress'">
+          <svg preserveAspectRatio="xMidYMid meet" width="300" height="200" viewBox="0 0 300 200">
+            <rect x="14" y="0" width="286" height="185" fill="none" stroke="#555" />
+            <text text-anchor="middle" transform="translate(10,90) rotate(-90)" x="0" y="0">Training Accuracy</text>
+            <polyline fill="none" stroke="#474" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" [attr.points]="getAccuracyGraphPolylineString(step.accuracies.length)"/>
+            <text font-size="10" text-anchor="middle" *ngFor="let label of getAccuracyLabelArray(step.accuracies.length)" [attr.x]="label.x" [attr.y]="label.y">{{ (label.acc * 100).toFixed(1) + "%" }}</text>
+            <text text-anchor="middle" x="150" y="197">Training Progress</text>
+            <text text-anchor="middle" x="280" y="196" font-size="10">{{ (step.maxPercent * 100).toFixed(1) + "%" }}</text>
+          </svg>
+        </div>
       </div>
     </div>
   </div>
@@ -35,4 +47,42 @@
 </div>
 
 <app-modal id="exportModal">
+  <h1>Export Network</h1>
+  <h3>Network Details</h3>
+  <div class="network-details">...</div>
+  <h3>Export Options</h3>
+  <div class="export-option-list">
+    <button role="button" type="button" class="export-option">
+      <label class="title">Export to Raw Javascript Function</label>
+      <div class="description">A raw javascript function that receives an array of numbers and returns an array of numbers which represent the probability of each individual label in the order {{ outputRecordAsString }} with one extra value for the probability of no label.</div>
+    </button>
+    <button role="button" type="button" class="export-option">
+      <label class="title">Export to Javascript Label Function</label>
+      <div class="description">A javascript function that receives an array of input numbers and returns the most likely label as a string (or null if none) of a given array of inputs.</div>
+    </button>
+    <button role="button" type="button" class="export-option">
+      <label class="title">Export to Javascript Image Coordinate Function</label>
+      <div class="description">A javascript function that receives a canvas or an ImageData and a coordinate and returns the most likely label (or null if none) at that point.</div>
+    </button>
+    <button role="button" type="button" class="export-option">
+      <label class="title">Export to Brain.JS JSON format</label>
+      <div class="description">A string JSON that can be loaded by using <a target="_blank" href="https://brain.js.org/">Brain.js</a>'s "<a target="_blank" href="https://github.com/BrainJS/brain.js#json">fromJSON</a>" method. Can be loaded to be manipulated or executed in the GPU with brainjs.</div>
+    </button>
+    <button role="button" type="button" class="export-option">
+      <label class="title">Export to raw C function</label>
+      <div class="description">A raw C function that receives a pointer to a float array, its size (just for validation) and returns an integer with the id of the most likely label id or -1 if no labels are found with that input. The id values are {{ outputRecordAsString }}.</div>
+    </button>
+    <button role="button" type="button" class="export-option">
+      <label class="title">Export to C function</label>
+      <div class="description">A C function that receives a pointer to a float array (and its size just for validation), a pointer to a char array to write the most likely label text as a null-terminated string and the max size of the char buffer for memory safety measures (validation).</div>
+    </button>
+    <button role="button" type="button" class="export-option">
+      <label class="title">Export to GLSL (WebGL) function</label>
+      <div class="description">A function that receives a fixed-size array of floats and returns a integer with the id of the most likely label or -1 if no labels are found with that input.  The id values are {{ outputRecordAsString }}.</div>
+    </button>
+    <button role="button" type="button" class="export-option">
+      <label class="title">Export to Texture-Reading GLSL (WebGL) function</label>
+      <div class="description">A function that receives pixel coordinate vector (vec2), a uniform sampler2D of a texture and a uniform resolution vector (vec2) to retrieve the pixel from a texture pixel and returns a integer with the id of the most likely label or -1 if no labels are found with that input. The id values are {{ outputRecordAsString }}.</div>
+    </button>
+  </div>
 </app-modal>

@@ -6,6 +6,31 @@ import { sleep } from 'src/app/utils/sleep';
 import { shuffle } from 'src/app/utils/shuffle';
 import { ModalService } from 'src/app/services/modal';
 
+interface TextStep {
+  type: "text";
+  memory?: number;
+  label: string;
+  date: Date;
+}
+
+interface ProgressStep {
+  type: "progress";
+  memories: number[];
+  percents: number[];
+  accuracies: number[];
+  maxPercent: number;
+  startDate: Date;
+  date: Date;
+}
+
+function detectTextStep(step: any): step is TextStep  {
+  return step.type === "text" && typeof step.label === "string" && step.date instanceof Date;
+}
+
+function detectProgressStep(step: any): step is ProgressStep  {
+  return step.type === "progress" && step.accuracies instanceof Array && step.percents instanceof Array;
+}
+
 @Component({
   selector: 'app-network-actions',
   templateUrl: './network-actions.component.html',
@@ -19,7 +44,7 @@ export class NetworkActionsComponent implements OnInit {
 
   public includeBorderOnDataset = true;
   public error: Error = null;
-  public steps: {memory?: number, label: string, date: Date}[] = [];
+  public steps: (TextStep|ProgressStep)[] = [];
   public network: any;
   public dataset: {
     train: { input: number[]; output: number[]; }[];
@@ -69,18 +94,126 @@ export class NetworkActionsComponent implements OnInit {
 
   addStep(label: string) {
     this.steps.push({
+      type: "text",
       memory: this.getMemoryUsage(),
       date: new Date(),
       label
     });
   }
 
-  getTimeString(index: number, date: Date) {
-    if (index === 0 || !this.steps || this.steps[0].date === date) {
-      return "at " + date.toLocaleTimeString();
+  addProgress(percent: number, accuracy: number) {
+    let index = -1;
+    for (index = 0; index < this.steps.length; index++) {
+      if (this.steps[index].type === "progress") {
+        break;
+      }
     }
-    const seconds = (date.getTime() - this.steps[index-1].date.getTime()) / 1000;
-    if (seconds <= 0.1) {
+    if (index < 0 || index >= this.steps.length) {
+      this.steps.push({
+        type: "progress",
+        memories: [this.getMemoryUsage()],
+        percents: [percent],
+        accuracies: [accuracy],
+        maxPercent: percent,
+        startDate: new Date(),
+        date: null
+      });
+    } else {
+      const step = this.steps[index];
+      if (!detectProgressStep(step)) {
+        throw new Error("Invalid progress step");
+      }
+      step.memories.push(this.getMemoryUsage());
+      step.percents.push(percent);
+      step.accuracies.push(accuracy);
+      step.maxPercent = percent;
+      step.date = new Date();
+    }
+  }
+
+  getTrainingStepIndex() {
+    let index = -1;
+    for (index = 0; index < this.steps.length; index++) {
+      if (this.steps[index].type === "progress") {
+        break;
+      }
+    }
+    return index;
+  }
+
+  getAccuracyGraphPolylineString(requestedSize: number) {
+    let index = this.getTrainingStepIndex();
+    const step = this.steps[index];
+    if (!step || !detectProgressStep(step)) {
+      throw new Error("Invalid progress step");
+    }
+    const size = Math.min(requestedSize, step.accuracies.length);
+
+    let s: [number, number][] = [];
+    for (let i = 0; i < size; i++) {
+      const xNorm = i / (size - 1);
+      const yNorm = step.accuracies[i];
+      const x = xNorm * (300 - 15);
+      const y = (1 - yNorm) * (200 - 15);
+      s.push([x, y]);
+    }
+    return s.map(([x, y]) => (x+15).toFixed(1) + " " + y.toFixed(1)).join(",");
+  }
+
+  getAccuracyLabelArray(requestedSize: number) {
+    let index = this.getTrainingStepIndex();
+    const step = this.steps[index];
+    if (!step || !detectProgressStep(step)) {
+      throw new Error("Invalid progress step");
+    }
+    const size = Math.min(requestedSize, step.accuracies.length);
+
+    let s: {x: number, y: number, acc: number}[] = [];
+    for (let i = 0; i < size; i++) {
+      const xNorm = i / (size - 1);
+      const yNorm = step.accuracies[i];
+      const x = xNorm * (300 - 15);
+      const y = (1 - yNorm) * (200 - 15);
+      const obj = {x, y: y - 5, acc: step.accuracies[i]};
+      if (obj.y < 8) {
+        obj.y = y + 11;
+      }
+      if (i > 1 && x > 35 && (s.length === 0 || Math.abs(s[s.length-1].x - x) >= 45)) {
+        s.push(obj);
+      } else if (i + 1 === size) {
+        obj.x = 300-15;
+        s[s.length-1] = obj;
+      }
+    }
+    return s;
+  }
+
+  getTrainingSecondsFromProgressStep() {
+    let index = this.getTrainingStepIndex();
+    const step = this.steps[index];
+    if (!step || !detectProgressStep(step)) {
+      throw new Error("Invalid progress step");
+    }
+    return (step.date.getTime() - step.startDate.getTime())/1000;
+  }
+
+  getTimeString(index: number) {
+    const step = this.steps[index];
+    if (!detectTextStep(step)) {
+      return "?";
+    } else if (!detectTextStep(this.steps[0])) {
+      throw new Error("First training step must be a label to let the user know that the training started");
+    }
+    if (index === 0) {
+      return "at " + step.date.toLocaleTimeString();
+    }
+    const previous = this.steps[index-1];
+    if (!previous) {
+      return "?";
+    }
+
+    const seconds = (step.date.getTime() - previous.date.getTime()) / 1000;
+    if (seconds <= 0.3) {
       return "";
     } else if (seconds === 1) {
       return `in 1 second`;
@@ -101,7 +234,7 @@ export class NetworkActionsComponent implements OnInit {
   private async step1() {
     this.steps = [];
     this.addStep(this.network ? "Restarted training" : "Started training");
-    await sleep(17);
+    await sleep(16);
     if (this.haltTraining) {
       throw new Error("Training halted by user");
     }
@@ -172,7 +305,7 @@ export class NetworkActionsComponent implements OnInit {
       train: trainDataset,
       test: dataset.slice(trainDatasetSize)
     };
-    await sleep(17);
+    await sleep(16);
     if (this.haltTraining) {
       throw new Error("Training halted by user");
     }
@@ -188,7 +321,7 @@ export class NetworkActionsComponent implements OnInit {
     } else {
       this.addStep("Loaded previous network. Starting training");
     }
-    await sleep(17);
+    await sleep(16);
     if (this.haltTraining) {
       throw new Error("Training halted by user");
     }
@@ -198,7 +331,7 @@ export class NetworkActionsComponent implements OnInit {
    * Step 4 - Training step that uses the dataset and the network
    */
   private async step4() {
-    const numberOfSteps = Math.min(10, this.config.epochCount);
+    const numberOfSteps = Math.min(20, this.config.epochCount);
     const datasetStride = (this.dataset.train.length / numberOfSteps) + 1 | 0;
     const trainingStride = Math.max(1, Math.round(this.config.epochCount / numberOfSteps));
 
@@ -209,7 +342,14 @@ export class NetworkActionsComponent implements OnInit {
       test: this.dataset.test.length
     });
 
+    {
+      const { accuracy } = this.neuralService.testNetwork(this.network, this.dataset.test.length > 0 ? this.dataset.test : this.dataset.train);
+      this.addProgress(0, accuracy);
+    }
+
+    let stepCount = 0;
     for (let i = 0; i < this.dataset.train.length; i += datasetStride) {
+      stepCount++;
       if (this.haltTraining) {
         throw new Error("Training halted by user");
       }
@@ -225,15 +365,23 @@ export class NetworkActionsComponent implements OnInit {
         throw new Error("Training halted by user");
       }
 
-      const { accuracy } = this.neuralService.testNetwork(this.network, this.dataset.test.length > 0 ? this.dataset.test : this.dataset.train);
-      const percentString = `${(100 * accuracy).toFixed(1)}%`;
-      if (i + datasetStride >= this.dataset.train.length) {
-        this.addStep(`100% - Accuracy: ${percentString}${this.dataset.test.length > 0 ? " (for training data)" : ""}`);
-      } else {
-        this.addStep(`${(100 * i / this.dataset.train.length).toFixed(0).padStart(3, '0')}% - Accuracy: ${percentString}`);
+      {
+        const { accuracy } = this.neuralService.testNetwork(this.network, this.dataset.test.length > 0 ? this.dataset.test : this.dataset.train);
+
+        const percent = (i + datasetStride) / (this.dataset.train.length);
+
+        if (percent >= 1) {
+          this.addProgress(1, accuracy);
+          this.addStep(`Final accuracy: ${(100 * accuracy).toFixed(2)}% ${this.dataset.test.length > 0 ? " (for training data)" : ""}`);
+          const seconds = this.getTrainingSecondsFromProgressStep();
+          const timeString = seconds < 60 ? `${seconds.toFixed(0)} seconds` : (seconds < 3600 ? `${(seconds/60).toFixed(1)} minutes` : `${(seconds/3600).toFixed(1)} hours`);
+          this.addStep(`Trained for ${timeString} in ${stepCount} steps of ${trainingStride} values each.`);
+        } else {
+          this.addProgress(percent, accuracy);
+        }
       }
 
-      await sleep(17);
+      await sleep(16);
       if (this.haltTraining) {
         throw new Error("Training halted by user");
       }
@@ -241,19 +389,22 @@ export class NetworkActionsComponent implements OnInit {
   }
 
   private async step5() {
-    const dataset = this.dataset.test.length === 0 ? this.dataset.train : this.dataset.test;
+    let dataset: { input: number[]; output: number[]; }[];
+    if (this.dataset.test.length === 0) {
+      this.addStep("Testing network with training data:");
+      dataset = this.dataset.train;
+    } else {
+      this.addStep("Testing network with test data:");
+      dataset = this.dataset.test;
+    }
     const result = this.neuralService.avaliateGuesses(this.network, dataset);
-    await sleep(17);
+    await sleep(16);
     if (this.haltTraining) {
       throw new Error("Training halted by user");
     }
-    if (this.dataset.test.length === 0) {
-      this.addStep("Tested network with training data, guessed results:");
-    } else {
-      this.addStep("Tested network with test data, guessed results:");
-    }
-    this.addStep(`Correct: ${result.accumulated.correct}, Incorrect: ${result.accumulated.incorrect}`);
-    await sleep(17);
+    const performance = result.accumulated.correct / (result.accumulated.correct + result.accumulated.incorrect);
+    this.addStep(`Correct: ${result.accumulated.correct}, Incorrect: ${result.accumulated.incorrect}, Performance: ${(performance * 100).toFixed(1)}%`);
+    await sleep(16);
     this.addStep("Finished");
   }
 
@@ -264,6 +415,7 @@ export class NetworkActionsComponent implements OnInit {
     this.error = null;
     this.haltTraining = false;
     this.training = true;
+    const trainingStart = new Date();
     try {
       await this.step1();
       await this.step2();
@@ -279,6 +431,8 @@ export class NetworkActionsComponent implements OnInit {
       console.error(err);
       this.error = err;
     }
+    const seconds = (new Date().getTime() - trainingStart.getTime()) / 1000;
+    console.log(Object.assign({}, this.config, {trainingSeconds: seconds}));
     this.training = false;
   }
 

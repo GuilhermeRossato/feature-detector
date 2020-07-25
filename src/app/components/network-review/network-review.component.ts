@@ -166,4 +166,8 @@ export class NetworkReviewComponent implements OnChanges {
     this.onAfterUpdatedValues();
   }
 
+  getTrainingTimeEstimateString() {
+    return "unknown";
+  }
+
 }

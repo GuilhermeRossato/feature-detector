@@ -52,3 +52,38 @@ button {
   font-size: 12px;
   line-height: 15px;
 }
+
+.export-option-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.export-option-list .export-option {
+  background-color: #eee;
+  border: 1px solid #ddd;
+  width: 350px;
+  padding: 10px 5px;
+  margin: 4px;
+  cursor: pointer;
+}
+
+.export-option-list .export-option:hover {
+  background-color: #ddd;
+  border-color: #ccc;
+}
+
+.export-option-list .export-option .title {
+  font-size: 17px;
+  font-weight: bold;
+  display: block;
+  margin: 10px;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+.export-option-list .export-option .description {
+  font-size: 11px;
+  line-height: 14px;
+  color: #444;
+  cursor: pointer;
+}

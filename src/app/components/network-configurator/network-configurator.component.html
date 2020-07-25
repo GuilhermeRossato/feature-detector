@@ -208,7 +208,7 @@
     </div>
     <div class="explanation">
       <h4 class="title">The percent of non-features in the dataset</h4>
-      <small class="description">This value allows you to control your network ability to detect areas that are not marked as features by setting aside a percent of the dataset that won't contain a feature so that the network can learn that some pixels are uninteresting.</small>
+      <small class="description">This value allows you to control your network ability to detect areas that are not marked as features by setting aside a percent of the dataset that won't contain a feature so that the network can learn to detect pixels that are similar to features, but are not features.</small>
     </div>
   </div>
   <div class="config-group">
@@ -225,7 +225,7 @@
     </div>
     <div class="explanation">
       <h4 class="title">The dataset slice that will be used for validation</h4>
-      <small class="description">The value of randomly-extracted percent of the dataset that will not be included in training which will be used exclusively to test the performance of the network so that you can accurately measure how capable the network is in generalizing as opposed to memorizing the inputs (overfitting). Ideal values range between 10% and 50%.</small>
+      <small class="description">The percent of randomly-extracted values of the dataset that will be used to validate the network during training. The validation set will not be included in training. It is useful to accurately measure how capable the network is in generalizing as opposed to memorizing the inputs (overfitting). Ideal values range between 10% and 50%.</small>
     </div>
   </div>
   <div class="config-group">
@@ -247,7 +247,7 @@
     </div>
     <div class="explanation">
       <h4 class="title">Which kind of redistribution  shall take place?</h4>
-      <small class="description">The network will always bias toward the most frequently found feature in the training set. If you have a distribution like 30% and 70% then enabling redistribution will remove 40% of the second feature, leaving 30% and 30%. In other words every feature gets limited (cut down) to the smallest distribution feature count. Select "no redistribution" to disable.</small>
+      <small class="description">Useful if you have more than one output as the network will bias toward the most frequently found feature in the training set. This allows you to distribute the input-output pairs so that all outputs are present equally in the training set. In other words every feature gets limited (cut down) to the smallest distribution feature count. Select "no redistribution" to disable.</small>
     </div>
   </div>
   <div class="config-group full-width" *ngIf="outputList">
